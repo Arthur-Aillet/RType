@@ -7,13 +7,15 @@ set(Cevy_VERSION 0.1)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib")
 
+add_subdirectory(Cevy)
+
 add_subdirectory(src)
 
 option(TESTS "Build tests" OFF)
 if(TESTS)
     add_custom_target(tests-run
                         COMMENT "Executing tests"
-                        COMMAND test
+                        COMMAND test-rtype
                         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                     )
 
