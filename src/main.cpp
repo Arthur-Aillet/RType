@@ -5,9 +5,9 @@
 #include "../Cevy/src/game_engine/position.hpp"
 #include "../Cevy/src/game_engine/velocity.hpp"
 
-void logging_system(registry &r) {
-    auto const &positions = r.get_components<position>();
-    auto const &velocities = r.get_components<velocity>();
+void logging_system(registry &r,
+    sparse_array<position> const &positions,
+    sparse_array<velocity> const &velocities) {
     for (size_t i = 0; i < positions.size() && i < velocities.size(); ++i) {
         auto const &pos = positions[i];
         auto const &vel = velocities[i];
@@ -25,10 +25,11 @@ int main() {
     app.register_component<drawable>();
     app.register_component<controllable>();
     entity movable = app.spawn_entity();
-    app.add_component(movable, position { 0, 0});
-    app.add_component(movable, velocity { 3, 1});
+    app.add_component(movable, position {0, 0});
+    app.add_component(movable, velocity {3, 1});
+    app.add_system<position, velocity>(logging_system);
     std::cout << "Hello world!" << std::endl;
-    logging_system(app);
+    app.run_systems();
     std::cout << "Hello world!" << std::endl;
     return 0;
 }
