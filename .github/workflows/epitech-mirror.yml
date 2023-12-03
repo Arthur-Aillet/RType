@@ -6,7 +6,7 @@ on:
       - main
       - dev
 env:
-  MIRROR_URL: git@github.com:EpitechPromo2026/B-DOP-500-PAR-5-1-whanos-arthur.aillet.git
+  MIRROR_URL: git@github.com:EpitechPromo2026/B-CPP-500-PAR-5-2-rtype-arthur.aillet.git
 
 jobs:
  push-to-mirror:
