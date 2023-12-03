@@ -16,8 +16,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Cloning to mirror
 
+      - name: Cloning to mirror
         uses: pixta-dev/repository-mirroring-action@v1
         with:
           target_repo_url:
