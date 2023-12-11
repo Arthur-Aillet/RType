@@ -17,4 +17,13 @@ test:
 	cmake -DTESTS=on -S . -B ./build
 	make --no-print-directory -C build tests-run
 
+clean:
+	rm -rf ./build/*
+
+fclean: clean
+	rm -rf ./lib/*
+	rm -rf ./bin/*
+
+re: fclean build
+
 .PHONY: all build test
