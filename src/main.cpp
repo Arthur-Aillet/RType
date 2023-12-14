@@ -10,8 +10,8 @@
 #include "../Cevy/src/game_engine/velocity.hpp"
 
 void logging_system(cevy::ecs::World &w,
-    sparse_array<position> const &positions,
-    sparse_array<velocity> const &velocities) {
+    SparseVector<position> const &positions,
+    SparseVector<velocity> const &velocities) {
     for (size_t i = 0; i < positions.size() && i < velocities.size(); ++i) {
         auto const &pos = positions[i];
         auto const &vel = velocities[i];
@@ -19,6 +19,51 @@ void logging_system(cevy::ecs::World &w,
             std::cerr << i << " : Position = {" << pos.value().x << ", " << pos.value().y <<
                 "}, Velocity = {" << vel.value().x << ", " << vel.value().y << "}" << std::endl;
         }
+    }
+}
+
+void system2(cevy::ecs::Query<position, velocity> query)
+{
+    auto i = 0;
+    // for (const auto& e : query) {
+    //     std::cerr << "element " << i++ << " in query" << std::endl;
+    // }
+
+    for (auto it = query.begin(); it != query.end(); ++it) {
+        std::cerr << i++ << ": pos: (" << std::get<position&>(*it).x << "," << std::get<position&>(*it).y << ")" << std::endl;
+    }
+}
+
+void dampen(cevy::ecs::Query<velocity> query)
+{
+    for (auto e : query) {
+        auto& x = std::get<velocity&>(e).x;
+        auto& y = std::get<velocity&>(e).y;
+        x -= x * x * 0.1 / 60;
+        y -= y * y * 0.1 / 60;
+    }
+}
+
+void apply_velocity(cevy::ecs::Query<velocity, position> query)
+{
+    for (auto e : query) {
+        std::get<position&>(e).x += std::get<velocity&>(e).x / 60.0;
+        std::get<position&>(e).y += std::get<velocity&>(e).y / 60.0;
+    }
+}
+
+void apply_gravity(cevy::ecs::Query<velocity> query)
+{
+    for (auto e : query) {
+        std::get<velocity&>(e).y -= 9.81 / 60.0;
+    }
+}
+
+void jump(cevy::ecs::Query<velocity, position> query)
+{
+    for (auto e : query) {
+        if (std::get<position&>(e).y <= 0)
+            std::get<velocity&>(e).y = 18.0;
     }
 }
 
@@ -68,12 +113,17 @@ int main() {
     app.add_component(movable, position {0, 0});
     app.add_component(movable, velocity {3, 1});
 
-    app.add_system<cevy::ecs::Schedule::Update>(update);
-    app.add_system<cevy::ecs::Schedule::PreUpdate>(pre_update);
-    app.add_system<cevy::ecs::Schedule::PostUpdate>(post_update);
-    app.add_system<cevy::ecs::Schedule::Startup>(startup);
-    app.add_system<cevy::ecs::Schedule::PreStartup>(pre_startup);
-//    app.add_system<position, velocity>(logging_system);
+    // app.add_system<cevy::ecs::Schedule::Update>(update);
+    // app.add_system<cevy::ecs::Schedule::PreUpdate>(pre_update);
+    // app.add_system<cevy::ecs::Schedule::PostUpdate>(post_update);
+    // app.add_system<cevy::ecs::Schedule::Startup>(startup);
+    // app.add_system<cevy::ecs::Schedule::PreStartup>(pre_startup);
+    // app.add_system<position, velocity>(logging_system);
+    app.add_super_system(system2);
+    app.add_super_system(apply_velocity);
+    app.add_super_system(dampen);
+    app.add_super_system(apply_gravity);
+    app.add_super_system(jump);
     std::cout << "Hello world!" << std::endl;
     app.run();
     std::cout << "Hello world!" << std::endl;
