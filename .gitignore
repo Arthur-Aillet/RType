@@ -39,3 +39,6 @@ lib/*
 build
 lib
 bin
+
+.clangd
+imgui.ini
