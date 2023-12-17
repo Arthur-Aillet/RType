@@ -26,4 +26,4 @@ fclean: clean
 
 re: fclean build
 
-.PHONY: all build test
+.PHONY: all build run test clean fclean re
