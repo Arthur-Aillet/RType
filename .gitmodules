@@ -1,0 +1,3 @@
+[submodule "Cevy"]
+	path = Cevy
+	url = git@github.com:Arthur-Aillet/Cevy.git

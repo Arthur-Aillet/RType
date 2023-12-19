@@ -5,7 +5,6 @@
 *.slo
 *.lo
 *.o
-*.obj
 
 # Precompiled Headers
 *.gch
@@ -30,3 +29,17 @@
 *.exe
 *.out
 *.app
+
+.vscode
+
+bin/*
+build/*
+lib/*
+build
+lib
+bin
+
+.clangd
+imgui.ini
+
+assets
