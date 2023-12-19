@@ -9,13 +9,28 @@
 #include "Commands.hpp"
 #include "input.hpp"
 #include "EntityCommands.hpp"
+#include "network/Synchroniser.hpp"
 #include "ecs.hpp"
 #include "engine/Engine.hpp"
 
 using namespace cevy;
 using namespace ecs;
 
-void create_space_ship(Resource<Asset<Model3D>> mod, Commands cmd) {
+struct PlayerMarker {
+    size_t i;
+};
+
+// void create_space_ship(Resource<Asset<Model3D>> mod, Commands cmd) {
+//     auto handle = mod.get().load(
+//         Settings3D {
+//             .model = "assets/space-ship1.obj",
+//             .diffuse = "assets/space-ship1.png"
+//         }
+//     );
+
+// }
+
+void create_player_ship(Resource<Asset<Model3D>> mod, Commands cmd) {
     auto handle = mod.get().load(
         Settings3D {
             .model = "assets/space-ship1.obj",
@@ -23,12 +38,14 @@ void create_space_ship(Resource<Asset<Model3D>> mod, Commands cmd) {
         }
     );
 
-    cmd.spawn(Position(), Rotation(0.0, 1.0, 0.0), handle);
+    cmd.spawn(Position(), Rotation(0.0, 1.0, 0.0), handle, cevy::Synchroniser::SyncId());
+    cmd.spawn(Position(), Rotation(0.0, 1.0, 0.0), handle, PlayerMarker(), cevy::Synchroniser::SyncId());
 }
 
 
-std::array<double, 3> cross(std::array<double, 3> first, std::array<double, 3> second) {
-    std::array<double, 3> result = {
+
+std::array<float, 3> cross(std::array<float, 3> first, std::array<float, 3> second) {
+    std::array<float, 3> result = {
         second[1] * first[2] - second[2] * first[1],
         second[2] * first[0] - second[0] * first[2],
         second[0] * first[1] - second[1] * first[0]
@@ -36,11 +53,11 @@ std::array<double, 3> cross(std::array<double, 3> first, std::array<double, 3> s
     return result;
 }
 
-void control_object(cevy::ecs::Query<cevy::Position, cevy::Rotation, cevy::Handle<cevy::Model3D>> objs) {
-    std::array<double, 3> fowards = {0.0, 1.0, 0.0};
-    std::array<double, 3> right = {1.0, 0.0, 0.0};
-    std::array<double, 3> up = {0.0, 0.0, 1.0};
-    double speed = 0.5;
+void control_object(cevy::ecs::Query<cevy::Position, cevy::Rotation, cevy::Handle<cevy::Model3D>, PlayerMarker> objs) {
+    std::array<float, 3> fowards = {0.0, 1.0, 0.0};
+    std::array<float, 3> right = {1.0, 0.0, 0.0};
+    std::array<float, 3> up = {0.0, 0.0, 1.0};
+    float speed = 0.5;
     for (auto obj : objs) {
         fowards = {std::get<1>(obj).fowards().x, std::get<1>(obj).fowards().y, std::get<1>(obj).fowards().z};
         up = {std::get<1>(obj).up().x, std::get<1>(obj).up().y, std::get<1>(obj).up().z};
@@ -65,13 +82,13 @@ void control_object(cevy::ecs::Query<cevy::Position, cevy::Rotation, cevy::Handl
         }
         if (cevy::Keyboard::keyPressed(KEY_RIGHT)) {
             // std::get<1>(obj).z += 1.0;
-            std::get<1>(obj).rotate(true);
+            // std::get<1>(obj).rotate(true);
         }
         // if (cevy::Keyboard::keyDown(KEY_DOWN)) {
         //     std::get<1>(obj).x += 1.0;
         // }
         if (cevy::Keyboard::keyPressed(KEY_LEFT)) {
-            std::get<1>(obj).rotate(false);
+            // std::get<1>(obj).rotate(false);
             // std::get<1>(obj).z += -1.0;
         }
         // if (cevy::Keyboard::keyDown(KEY_UP)) {
@@ -80,9 +97,9 @@ void control_object(cevy::ecs::Query<cevy::Position, cevy::Rotation, cevy::Handl
     }
 }
 
-void follow_object(cevy::ecs::Query<cevy::Camera, cevy::Position, cevy::Rotation> cams, cevy::ecs::Query<cevy::Position, cevy::Rotation, cevy::Handle<cevy::Model3D>> objs) {
+void follow_object(cevy::ecs::Query<cevy::Camera, cevy::Position, cevy::Rotation> cams, cevy::ecs::Query<cevy::Position, cevy::Rotation, cevy::Handle<cevy::Model3D>, PlayerMarker> objs) {
     Vector fowards = {0.0, 1.0, 0.0};
-    double distance = 30;
+    float distance = 30;
     for (auto obj : objs) {
         // fowards = std::get<1>(obj).fowards();
         for (auto cam : cams) {
@@ -97,6 +114,7 @@ void follow_object(cevy::ecs::Query<cevy::Camera, cevy::Position, cevy::Rotation
 int main() {
     struct SpaceShip {};
     App app;
+    app.init_component<PlayerMarker>();
     app.insert_resource(cevy::AssetManager());
     app.add_plugins(Engine());
     // if (!app.contains_resource<Asset<Model3D>>())
@@ -109,7 +127,8 @@ int main() {
     //     }
     // );
     // app.init_archetype<SpaceShip>(Position(), Rotation(0.0, 1.0, 0.0), handle);
-    app.add_system<Schedule::Startup>(create_space_ship);
+    app.add_system<Schedule::Startup>(create_player_ship);
+    // app.add_system<Schedule::Startup>(create_space_ship);
     app.add_system<Schedule::Update>(control_object);
     app.add_system<Schedule::Update>(follow_object);
     app.run();
