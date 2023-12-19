@@ -40,11 +40,11 @@ void control_object(cevy::ecs::Query<cevy::Position, cevy::Rotation, cevy::Handl
     std::array<double, 3> fowards = {0.0, 1.0, 0.0};
     std::array<double, 3> right = {1.0, 0.0, 0.0};
     std::array<double, 3> up = {0.0, 0.0, 1.0};
-    double speed = 0.1;
+    double speed = 0.5;
     for (auto obj : objs) {
         fowards = {std::get<1>(obj).x, std::get<1>(obj).y, std::get<1>(obj).z};
         right = cross(fowards, up);
-        if (cevy::Keyboard::keyDown(KEY_Q)) {
+        if (cevy::Keyboard::keyDown(KEY_SPACE)) {
             std::get<0>(obj) = {std::get<0>(obj).x + up[0] * speed, std::get<0>(obj).y + up[1] * speed, std::get<0>(obj).z + up[2] * speed};
         }
         if (cevy::Keyboard::keyDown(KEY_W)) {
@@ -53,7 +53,7 @@ void control_object(cevy::ecs::Query<cevy::Position, cevy::Rotation, cevy::Handl
         if (cevy::Keyboard::keyDown(KEY_A)) {
             std::get<0>(obj) = {std::get<0>(obj).x + right[0] * speed, std::get<0>(obj).y + right[1] * speed, std::get<0>(obj).z + right[2] * speed};
         }
-        if (cevy::Keyboard::keyDown(KEY_E)) {
+        if (cevy::Keyboard::keyDown(KEY_LEFT_SHIFT)) {
             std::get<0>(obj) = {std::get<0>(obj).x - up[0] * speed, std::get<0>(obj).y - up[1] * speed, std::get<0>(obj).z - up[2] * speed};
         }
         if (cevy::Keyboard::keyDown(KEY_S)) {
@@ -77,13 +77,14 @@ void control_object(cevy::ecs::Query<cevy::Position, cevy::Rotation, cevy::Handl
     }
 }
 
-void follow_object(cevy::ecs::Query<cevy::Camera, cevy::Position> cams, cevy::ecs::Query<cevy::Position, cevy::Rotation, cevy::Handle<cevy::Model3D>> objs) {
+void follow_object(cevy::ecs::Query<cevy::Camera, cevy::Position, cevy::Rotation> cams, cevy::ecs::Query<cevy::Position, cevy::Rotation, cevy::Handle<cevy::Model3D>> objs) {
     Vector fowards = {0.0, 1.0, 0.0};
+    double distance = 30;
     for (auto obj : objs) {
-        fowards = std::get<1>(obj);
         for (auto cam : cams) {
+            fowards = std::get<2>(cam);
             std::get<0>(cam).camera.target = {std::get<0>(obj).x, std::get<0>(obj).y, std::get<0>(obj).z};
-            std::get<1>(cam) = {std::get<0>(obj).x - fowards.x, std::get<0>(obj).y - fowards.y, std::get<0>(obj).z - fowards.z};
+            std::get<1>(cam) = Position (std::get<0>(obj).x - fowards.x * distance, std::get<0>(obj).y - fowards.y * distance, std::get<0>(obj).z - fowards.z * distance);
         }
     }
 }
