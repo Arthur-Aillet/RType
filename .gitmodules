@@ -1,3 +1,6 @@
 [submodule "Cevy"]
 	path = Cevy
 	url = git@github.com:Arthur-Aillet/Cevy.git
+[submodule "asio"]
+	path = asio
+	url = git@github.com:chriskohlhoff/asio.git
