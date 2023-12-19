@@ -9,6 +9,10 @@ build:
 	cmake -S . -B ./build
 	make --no-print-directory -C build
 
+debug:
+	cmake -S . -B ./build -DCMAKE_BUILD_TYPE=Debug
+	make --no-print-directory -C build
+
 run:
 	cmake -DRUN=on -S . -B ./build
 	make --no-print-directory -C build run
