@@ -64,14 +64,16 @@ void control_object(cevy::ecs::Query<cevy::Position, cevy::Rotation, cevy::Handl
             std::get<0>(obj) = {std::get<0>(obj).x - right[0] * speed, std::get<0>(obj).y - right[1] * speed, std::get<0>(obj).z - right[2] * speed};
         }
         if (cevy::Keyboard::keyPressed(KEY_RIGHT)) {
-            std::get<1>(obj).rotate();
+            // std::get<1>(obj).z += 1.0;
+            std::get<1>(obj).rotate(true);
         }
         // if (cevy::Keyboard::keyDown(KEY_DOWN)) {
         //     std::get<1>(obj).x += 1.0;
         // }
-        // if (cevy::Keyboard::keyDown(KEY_LEFT)) {
-        //     std::get<1>(obj).z += -1.0;
-        // }
+        if (cevy::Keyboard::keyPressed(KEY_LEFT)) {
+            std::get<1>(obj).rotate(false);
+            // std::get<1>(obj).z += -1.0;
+        }
         // if (cevy::Keyboard::keyDown(KEY_UP)) {
         //     std::get<1>(obj).x += -1.0;
         // }
