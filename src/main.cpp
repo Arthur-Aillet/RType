@@ -90,8 +90,20 @@ void follow_object(cevy::ecs::Query<cevy::Camera, cevy::Position, cevy::Rotation
 }
 
 int main() {
+    struct SpaceShip {};
     App app;
+    app.insert_resource(cevy::AssetManager());
     app.add_plugins(Engine());
+    // if (!app.contains_resource<Asset<Model3D>>())
+    //     return 84;
+    // auto& mod = app.resource<Asset<Model3D>>();
+    // auto handle = mod.load(
+    //     Settings3D {
+    //         .model = "assets/space-ship1.obj",
+    //         .diffuse = "assets/space-ship1.png"
+    //     }
+    // );
+    // app.init_archetype<SpaceShip>(Position(), Rotation(0.0, 1.0, 0.0), handle);
     app.add_system<Schedule::Startup>(create_space_ship);
     app.add_system<Schedule::Update>(control_object);
     app.add_system<Schedule::Update>(follow_object);
