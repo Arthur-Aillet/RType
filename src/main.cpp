@@ -1,5 +1,3 @@
-#include <iostream>
-
 #include "App.hpp"
 #include "AssetManager.hpp"
 #include "Commands.hpp"
@@ -9,7 +7,6 @@
 #include "Commands.hpp"
 #include "input.hpp"
 #include "EntityCommands.hpp"
-#include "network/Synchroniser.hpp"
 #include "ecs.hpp"
 #include "engine/Engine.hpp"
 
@@ -20,16 +17,6 @@ struct PlayerMarker {
     size_t i;
 };
 
-// void create_space_ship(Resource<Asset<Model3D>> mod, Commands cmd) {
-//     auto handle = mod.get().load(
-//         Settings3D {
-//             .model = "assets/space-ship1.obj",
-//             .diffuse = "assets/space-ship1.png"
-//         }
-//     );
-
-// }
-
 void create_player_ship(Resource<Asset<Model3D>> mod, Commands cmd) {
     auto handle = mod.get().load(
         Settings3D {
@@ -38,11 +25,8 @@ void create_player_ship(Resource<Asset<Model3D>> mod, Commands cmd) {
         }
     );
 
-    cmd.spawn(Position(), Rotation(0.0, 1.0, 0.0), handle, cevy::Synchroniser::SyncId());
-    cmd.spawn(Position(), Rotation(0.0, 1.0, 0.0), handle, PlayerMarker(), cevy::Synchroniser::SyncId());
+    cmd.spawn(Position(), Rotation(0.0, 1.0, 0.0), handle, PlayerMarker());
 }
-
-
 
 std::array<float, 3> cross(std::array<float, 3> first, std::array<float, 3> second) {
     std::array<float, 3> result = {
@@ -81,19 +65,10 @@ void control_object(cevy::ecs::Query<cevy::Position, cevy::Rotation, cevy::Handl
             std::get<0>(obj) = {std::get<0>(obj).x - right[0] * speed, std::get<0>(obj).y - right[1] * speed, std::get<0>(obj).z - right[2] * speed};
         }
         if (cevy::Keyboard::keyPressed(KEY_RIGHT)) {
-            // std::get<1>(obj).z += 1.0;
-            // std::get<1>(obj).rotate(true);
         }
-        // if (cevy::Keyboard::keyDown(KEY_DOWN)) {
-        //     std::get<1>(obj).x += 1.0;
-        // }
+
         if (cevy::Keyboard::keyPressed(KEY_LEFT)) {
-            // std::get<1>(obj).rotate(false);
-            // std::get<1>(obj).z += -1.0;
         }
-        // if (cevy::Keyboard::keyDown(KEY_UP)) {
-        //     std::get<1>(obj).x += -1.0;
-        // }
     }
 }
 
@@ -117,18 +92,7 @@ int main() {
     app.init_component<PlayerMarker>();
     app.insert_resource(cevy::AssetManager());
     app.add_plugins(Engine());
-    // if (!app.contains_resource<Asset<Model3D>>())
-    //     return 84;
-    // auto& mod = app.resource<Asset<Model3D>>();
-    // auto handle = mod.load(
-    //     Settings3D {
-    //         .model = "assets/space-ship1.obj",
-    //         .diffuse = "assets/space-ship1.png"
-    //     }
-    // );
-    // app.init_archetype<SpaceShip>(Position(), Rotation(0.0, 1.0, 0.0), handle);
     app.add_system<Schedule::Startup>(create_player_ship);
-    // app.add_system<Schedule::Startup>(create_space_ship);
     app.add_system<Schedule::Update>(control_object);
     app.add_system<Schedule::Update>(follow_object);
     app.run();
