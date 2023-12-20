@@ -17,23 +17,22 @@ struct PlayerMarker {
 };
 
 void create_player_ship(Resource<Asset<Model3D>> mod, Commands cmd) {
-  auto handle = mod.get().load(Settings3D{.model = "assets/space-ship1.obj",
-                                          .diffuse = "assets/space-ship1.png"});
+  auto handle = mod.get().load(
+      Settings3D{.model = "assets/space-ship1.obj", .diffuse = "assets/space-ship1.png"});
 
   cmd.spawn(Position(), Rotation(0.0, 1.0, 0.0), handle, PlayerMarker());
 }
 
-std::array<float, 3> cross(std::array<float, 3> first,
-                           std::array<float, 3> second) {
+std::array<float, 3> cross(std::array<float, 3> first, std::array<float, 3> second) {
   std::array<float, 3> result = {second[1] * first[2] - second[2] * first[1],
                                  second[2] * first[0] - second[0] * first[2],
                                  second[0] * first[1] - second[1] * first[0]};
   return result;
 }
 
-void control_object(cevy::ecs::Query<cevy::Position, cevy::Rotation,
-                                     cevy::Handle<cevy::Model3D>, PlayerMarker>
-                        objs) {
+void control_object(
+    cevy::ecs::Query<cevy::Position, cevy::Rotation, cevy::Handle<cevy::Model3D>, PlayerMarker>
+        objs) {
   std::array<float, 3> fowards = {0.0, 1.0, 0.0};
   std::array<float, 3> right = {1.0, 0.0, 0.0};
   std::array<float, 3> up = {0.0, 0.0, 1.0};
@@ -41,12 +40,10 @@ void control_object(cevy::ecs::Query<cevy::Position, cevy::Rotation,
   for (auto obj : objs) {
     fowards = {std::get<1>(obj).fowards().x, std::get<1>(obj).fowards().y,
                std::get<1>(obj).fowards().z};
-    up = {std::get<1>(obj).up().x, std::get<1>(obj).up().y,
-          std::get<1>(obj).up().z};
+    up = {std::get<1>(obj).up().x, std::get<1>(obj).up().y, std::get<1>(obj).up().z};
     right = cross(fowards, up);
     if (cevy::Keyboard::keyDown(KEY_SPACE)) {
-      std::get<0>(obj) = {std::get<0>(obj).x + up[0] * speed,
-                          std::get<0>(obj).y + up[1] * speed,
+      std::get<0>(obj) = {std::get<0>(obj).x + up[0] * speed, std::get<0>(obj).y + up[1] * speed,
                           std::get<0>(obj).z + up[2] * speed};
     }
     if (cevy::Keyboard::keyDown(KEY_W)) {
@@ -60,8 +57,7 @@ void control_object(cevy::ecs::Query<cevy::Position, cevy::Rotation,
                           std::get<0>(obj).z + right[2] * speed};
     }
     if (cevy::Keyboard::keyDown(KEY_LEFT_SHIFT)) {
-      std::get<0>(obj) = {std::get<0>(obj).x - up[0] * speed,
-                          std::get<0>(obj).y - up[1] * speed,
+      std::get<0>(obj) = {std::get<0>(obj).x - up[0] * speed, std::get<0>(obj).y - up[1] * speed,
                           std::get<0>(obj).z - up[2] * speed};
     }
     if (cevy::Keyboard::keyDown(KEY_S)) {
@@ -84,8 +80,7 @@ void control_object(cevy::ecs::Query<cevy::Position, cevy::Rotation,
 
 void follow_object(
     cevy::ecs::Query<cevy::Camera, cevy::Position, cevy::Rotation> cams,
-    cevy::ecs::Query<cevy::Position, cevy::Rotation,
-                     cevy::Handle<cevy::Model3D>, PlayerMarker>
+    cevy::ecs::Query<cevy::Position, cevy::Rotation, cevy::Handle<cevy::Model3D>, PlayerMarker>
         objs) {
   Vector fowards = {0.0, 1.0, 0.0};
   float distance = 30;
@@ -94,8 +89,7 @@ void follow_object(
     for (auto cam : cams) {
       fowards = std::get<2>(cam);
       // std::get<2>(cam) = std::get<1>(obj);
-      std::get<0>(cam).camera.target = {std::get<0>(obj).x, std::get<0>(obj).y,
-                                        std::get<0>(obj).z};
+      std::get<0>(cam).camera.target = {std::get<0>(obj).x, std::get<0>(obj).y, std::get<0>(obj).z};
       std::get<1>(cam) = Position(std::get<0>(obj).x - fowards.x * distance,
                                   std::get<0>(obj).y - fowards.y * distance,
                                   std::get<0>(obj).z - fowards.z * distance);

@@ -20,6 +20,7 @@ run:
 	make --no-print-directory -C build run
 
 format:
+	cp Cevy/.clang-format .
 	@for src in $(shell find $(SRC_DIR) -name "*.cpp" -o -name "*.hpp") ; do \
 		echo "Formatting [$$src]..." ;  			\
 		clang-format -i "$$src" -style=file ; 		\
