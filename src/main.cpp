@@ -1,131 +1,100 @@
-#include <iostream>
+#include "App.hpp"
+#include "AssetManager.hpp"
+#include "Commands.hpp"
+#include "Camera.hpp"
+#include "Position.hpp"
+#include "Rotation.hpp"
+#include "Commands.hpp"
+#include "input.hpp"
+#include "EntityCommands.hpp"
+#include "ecs.hpp"
+#include "engine/Engine.hpp"
 
-#include "../Cevy/src/cevy.hpp"
-#include "../Cevy/src/ecs/ecs.hpp"
-#include "../Cevy/src/ecs/App.hpp"
-#include "../Cevy/src/ecs/Plugin.hpp"
-#include "../Cevy/src/ecs/Schedule.hpp"
-#include "../Cevy/src/game_engine/game_engine.hpp"
-#include "../Cevy/src/game_engine/position.hpp"
-#include "../Cevy/src/game_engine/velocity.hpp"
+using namespace cevy;
+using namespace ecs;
 
-void logging_system(cevy::ecs::World &w,
-    SparseVector<position> const &positions,
-    SparseVector<velocity> const &velocities) {
-    for (size_t i = 0; i < positions.size() && i < velocities.size(); ++i) {
-        auto const &pos = positions[i];
-        auto const &vel = velocities[i];
-        if (pos && vel) {
-            std::cerr << i << " : Position = {" << pos.value().x << ", " << pos.value().y <<
-                "}, Velocity = {" << vel.value().x << ", " << vel.value().y << "}" << std::endl;
+struct PlayerMarker {
+    size_t i;
+};
+
+void create_player_ship(Resource<Asset<Model3D>> mod, Commands cmd) {
+    auto handle = mod.get().load(
+        Settings3D {
+            .model = "assets/space-ship1.obj",
+            .diffuse = "assets/space-ship1.png"
+        }
+    );
+
+    cmd.spawn(Position(), Rotation(0.0, 1.0, 0.0), handle, PlayerMarker());
+}
+
+std::array<float, 3> cross(std::array<float, 3> first, std::array<float, 3> second) {
+    std::array<float, 3> result = {
+        second[1] * first[2] - second[2] * first[1],
+        second[2] * first[0] - second[0] * first[2],
+        second[0] * first[1] - second[1] * first[0]
+    };
+    return result;
+}
+
+void control_object(cevy::ecs::Query<cevy::Position, cevy::Rotation, cevy::Handle<cevy::Model3D>, PlayerMarker> objs) {
+    std::array<float, 3> fowards = {0.0, 1.0, 0.0};
+    std::array<float, 3> right = {1.0, 0.0, 0.0};
+    std::array<float, 3> up = {0.0, 0.0, 1.0};
+    float speed = 0.5;
+    for (auto obj : objs) {
+        fowards = {std::get<1>(obj).fowards().x, std::get<1>(obj).fowards().y, std::get<1>(obj).fowards().z};
+        up = {std::get<1>(obj).up().x, std::get<1>(obj).up().y, std::get<1>(obj).up().z};
+        right = cross(fowards, up);
+        if (cevy::Keyboard::keyDown(KEY_SPACE)) {
+            std::get<0>(obj) = {std::get<0>(obj).x + up[0] * speed, std::get<0>(obj).y + up[1] * speed, std::get<0>(obj).z + up[2] * speed};
+        }
+        if (cevy::Keyboard::keyDown(KEY_W)) {
+            std::get<0>(obj) = {std::get<0>(obj).x + fowards[0] * speed, std::get<0>(obj).y + fowards[1] * speed, std::get<0>(obj).z + fowards[2] * speed};
+        }
+        if (cevy::Keyboard::keyDown(KEY_A)) {
+            std::get<0>(obj) = {std::get<0>(obj).x + right[0] * speed, std::get<0>(obj).y + right[1] * speed, std::get<0>(obj).z + right[2] * speed};
+        }
+        if (cevy::Keyboard::keyDown(KEY_LEFT_SHIFT)) {
+            std::get<0>(obj) = {std::get<0>(obj).x - up[0] * speed, std::get<0>(obj).y - up[1] * speed, std::get<0>(obj).z - up[2] * speed};
+        }
+        if (cevy::Keyboard::keyDown(KEY_S)) {
+            std::get<0>(obj) = {std::get<0>(obj).x - fowards[0] * speed, std::get<0>(obj).y - fowards[1] * speed, std::get<0>(obj).z - fowards[2] * speed};
+        }
+        if (cevy::Keyboard::keyDown(KEY_D)) {
+            std::get<0>(obj) = {std::get<0>(obj).x - right[0] * speed, std::get<0>(obj).y - right[1] * speed, std::get<0>(obj).z - right[2] * speed};
+        }
+        if (cevy::Keyboard::keyPressed(KEY_RIGHT)) {
+        }
+
+        if (cevy::Keyboard::keyPressed(KEY_LEFT)) {
         }
     }
 }
 
-void system2(cevy::ecs::Query<position, velocity> query)
-{
-    auto i = 0;
-    // for (const auto& e : query) {
-    //     std::cerr << "element " << i++ << " in query" << std::endl;
-    // }
-
-    for (auto it = query.begin(); it != query.end(); ++it) {
-        std::cerr << i++ << ": pos: (" << std::get<position&>(*it).x << "," << std::get<position&>(*it).y << ")" << std::endl;
+void follow_object(cevy::ecs::Query<cevy::Camera, cevy::Position, cevy::Rotation> cams, cevy::ecs::Query<cevy::Position, cevy::Rotation, cevy::Handle<cevy::Model3D>, PlayerMarker> objs) {
+    Vector fowards = {0.0, 1.0, 0.0};
+    float distance = 30;
+    for (auto obj : objs) {
+        // fowards = std::get<1>(obj).fowards();
+        for (auto cam : cams) {
+            fowards = std::get<2>(cam);
+            // std::get<2>(cam) = std::get<1>(obj);
+            std::get<0>(cam).camera.target = {std::get<0>(obj).x, std::get<0>(obj).y, std::get<0>(obj).z};
+            std::get<1>(cam) = Position (std::get<0>(obj).x - fowards.x * distance, std::get<0>(obj).y - fowards.y * distance, std::get<0>(obj).z - fowards.z * distance);
+        }
     }
 }
-
-void dampen(cevy::ecs::Query<velocity> query)
-{
-    for (auto e : query) {
-        auto& x = std::get<velocity&>(e).x;
-        auto& y = std::get<velocity&>(e).y;
-        x -= x * x * 0.1 / 60;
-        y -= y * y * 0.1 / 60;
-    }
-}
-
-void apply_velocity(cevy::ecs::Query<velocity, position> query)
-{
-    for (auto e : query) {
-        std::get<position&>(e).x += std::get<velocity&>(e).x / 60.0;
-        std::get<position&>(e).y += std::get<velocity&>(e).y / 60.0;
-    }
-}
-
-void apply_gravity(cevy::ecs::Query<velocity> query)
-{
-    for (auto e : query) {
-        std::get<velocity&>(e).y -= 9.81 / 60.0;
-    }
-}
-
-void jump(cevy::ecs::Query<velocity, position> query)
-{
-    for (auto e : query) {
-        if (std::get<position&>(e).y <= 0)
-            std::get<velocity&>(e).y = 18.0;
-    }
-}
-
-void update(cevy::ecs::World &w) {
-    std::cerr << "Update" << std::endl;
-}
-
-void post_update(cevy::ecs::World &w) {
-    std::cerr << "Post Update" << std::endl;
-}
-
-void pre_update(cevy::ecs::World &w) {
-    std::cerr << "Pre Update" << std::endl;
-}
-
-void startup(cevy::ecs::World &w) {
-    std::cerr << "Startup" << std::endl;
-}
-
-void pre_startup(cevy::ecs::World &w) {
-    std::cerr << "pre Startup" << std::endl;
-}
-
-class GoodByePlugin : public cevy::ecs::Plugin {
-    public: void build(cevy::ecs::App& app) override
-    {
-        app.register_component<float>();
-    }
-};
-
-
-class HelloPlugin : public cevy::ecs::Plugin {
-    public: void build(cevy::ecs::App& app) override
-    {
-        app.register_component<int>();
-    }
-};
 
 int main() {
-    cevy::ecs::App app;
-    app.add_plugins<HelloPlugin>();
-    app.register_component<position>();
-    app.register_component<velocity>();
-    app.register_component<drawable>();
-    app.register_component<controllable>();
-    cevy::ecs::Entity movable = app.spawn_empty();
-    app.add_component(movable, position {0, 0});
-    app.add_component(movable, velocity {3, 1});
-
-    // app.add_system<cevy::ecs::Schedule::Update>(update);
-    // app.add_system<cevy::ecs::Schedule::PreUpdate>(pre_update);
-    // app.add_system<cevy::ecs::Schedule::PostUpdate>(post_update);
-    // app.add_system<cevy::ecs::Schedule::Startup>(startup);
-    // app.add_system<cevy::ecs::Schedule::PreStartup>(pre_startup);
-    // app.add_system<position, velocity>(logging_system);
-    app.add_super_system(system2);
-    app.add_super_system(apply_velocity);
-    app.add_super_system(dampen);
-    app.add_super_system(apply_gravity);
-    app.add_super_system(jump);
-    std::cout << "Hello world!" << std::endl;
+    struct SpaceShip {};
+    App app;
+    app.init_component<PlayerMarker>();
+    app.insert_resource(cevy::AssetManager());
+    app.add_plugins(Engine());
+    app.add_system<Schedule::Startup>(create_player_ship);
+    app.add_system<Schedule::Update>(control_object);
+    app.add_system<Schedule::Update>(follow_object);
     app.run();
-    std::cout << "Hello world!" << std::endl;
     return 0;
 }
