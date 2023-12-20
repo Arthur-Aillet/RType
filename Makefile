@@ -21,8 +21,8 @@ run:
 
 format:
 	@for src in $(shell find $(SRC_DIR) -name "*.cpp" -o -name "*.hpp") ; do \
-		echo "Formatting [$$src]..." ;  \
-		clang-format -i "$$src" ; 		\
+		echo "Formatting [$$src]..." ;  			\
+		clang-format -i "$$src" -style=file ; 		\
 	done
 	@echo "Done"
 
