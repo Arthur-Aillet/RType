@@ -1,4 +1,5 @@
 #include "App.hpp"
+#include "Asset.hpp"
 #include "AssetManager.hpp"
 #include "Camera.hpp"
 #include "Commands.hpp"
@@ -17,11 +18,12 @@ struct PlayerMarker {
   size_t i;
 };
 
-void create_player_ship(Resource<Asset<Model3D>> mod, Commands cmd) {
-  auto handle = mod.get().load(
-      Settings3D{.model = "assets/space-ship1.obj", .diffuse = "assets/space-ship1.png"});
+void create_player_ship(Resource<Asset<cevy::engine::Mesh>> meshs, Resource<Asset<Diffuse>> difs,
+                        Commands cmd) {
+  auto handle_difs = difs.get().load("assets/space-ship1.png");
+  auto handle_mesh = meshs.get().load("assets/space-ship1.obj");
 
-  cmd.spawn(Position(), Rotation(0.0, 1.0, 0.0), handle, PlayerMarker());
+  cmd.spawn(Position(), Rotation(0.0, 1.0, 0.0), handle_mesh, handle_difs, PlayerMarker());
 }
 
 std::array<float, 3> cross(std::array<float, 3> first, std::array<float, 3> second) {
@@ -31,7 +33,8 @@ std::array<float, 3> cross(std::array<float, 3> first, std::array<float, 3> seco
   return result;
 }
 
-void control_object(Query<Position, Rotation, Handle<Model3D>, PlayerMarker> objs) {
+void control_object(
+    Query<Position, Rotation, cevy::engine::Handle<cevy::engine::Mesh>, PlayerMarker> objs) {
   std::array<float, 3> fowards = {0.0, 1.0, 0.0};
   std::array<float, 3> right = {1.0, 0.0, 0.0};
   std::array<float, 3> up = {0.0, 0.0, 1.0};
@@ -78,7 +81,7 @@ void control_object(Query<Position, Rotation, Handle<Model3D>, PlayerMarker> obj
 }
 
 void follow_object(Query<cevy::engine::Camera, Position, Rotation> cams,
-                   Query<Position, Rotation, Handle<Model3D>, PlayerMarker> objs) {
+                   Query<Position, Rotation, Handle<cevy::engine::Mesh>, PlayerMarker> objs) {
   Vector fowards = {0.0, 1.0, 0.0};
   float distance = 30;
   for (auto obj : objs) {
