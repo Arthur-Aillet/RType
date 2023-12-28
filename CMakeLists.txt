@@ -1,3 +1,4 @@
+include(CPack)
 cmake_minimum_required(VERSION 3.7.2)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -30,5 +31,14 @@ if(RUN)
                         COMMENT "Launching binary"
                         COMMAND rtype
                         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                    )
+endif()
+
+option(PACKAGE "Create binary package" OFF)
+if(PACKAGE)
+    add_custom_target(package
+                        COMMENT "Creating binary package"
+                        COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_SOURCE_DIR}/cpack.cmake
+                        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
                     )
 endif()

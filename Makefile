@@ -21,6 +21,10 @@ test:
 	cmake -DTESTS=on -S . -B ./build
 	make --no-print-directory -C build tests-run
 
+package:
+	cmake -DPACKAGE=on -S . -B ./build
+	make --no-print-directory -C build
+
 clean:
 	rm -rf ./build/*
 
