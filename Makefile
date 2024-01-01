@@ -3,6 +3,8 @@
 ## File : Makefile
 ##
 
+SRC_DIR	=	src
+
 all:	build
 
 build:
@@ -16,6 +18,14 @@ debug:
 run:
 	cmake -DRUN=on -S . -B ./build
 	make --no-print-directory -C build run
+
+format:
+	cp Cevy/.clang-format .
+	@for src in $(shell find $(SRC_DIR) -name "*.cpp" -o -name "*.hpp") ; do \
+		echo "Formatting [$$src]..." ;  			\
+		clang-format -i "$$src" -style=file ; 		\
+	done
+	@echo "Done"
 
 test:
 	cmake -DTESTS=on -S . -B ./build
