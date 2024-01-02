@@ -21,9 +21,9 @@ test:
 	cmake -DTESTS=on -S . -B ./build
 	make --no-print-directory -C build tests-run
 
-package:
-	cmake -DPACKAGE=on -S . -B ./build
-	make --no-print-directory -C build
+package_sources:
+	cmake -DSOURCE_PACKAGE=on -S . -B ./build
+	cd ./build && cpack -G ZIP
 
 clean:
 	rm -rf ./build/*
