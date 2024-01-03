@@ -52,11 +52,13 @@ void control_object(
       std::get<0>(obj) = {std::get<0>(obj).x + fowards[0] * speed,
                           std::get<0>(obj).y + fowards[1] * speed,
                           std::get<0>(obj).z + fowards[2] * speed};
+      std::get<1>(obj).x -= 1;
     }
     if (Keyboard::keyDown(KEY_A)) {
       std::get<0>(obj) = {std::get<0>(obj).x + right[0] * speed,
                           std::get<0>(obj).y + right[1] * speed,
                           std::get<0>(obj).z + right[2] * speed};
+      std::get<1>(obj).y -= 1;
     }
     if (Keyboard::keyDown(KEY_LEFT_SHIFT)) {
       std::get<0>(obj) = {std::get<0>(obj).x - up[0] * speed, std::get<0>(obj).y - up[1] * speed,
@@ -66,11 +68,13 @@ void control_object(
       std::get<0>(obj) = {std::get<0>(obj).x - fowards[0] * speed,
                           std::get<0>(obj).y - fowards[1] * speed,
                           std::get<0>(obj).z - fowards[2] * speed};
+      std::get<1>(obj).x += 1;
     }
     if (Keyboard::keyDown(KEY_D)) {
       std::get<0>(obj) = {std::get<0>(obj).x - right[0] * speed,
                           std::get<0>(obj).y - right[1] * speed,
                           std::get<0>(obj).z - right[2] * speed};
+      std::get<1>(obj).y += 1;
     }
     if (Keyboard::keyPressed(KEY_RIGHT)) {
     }
