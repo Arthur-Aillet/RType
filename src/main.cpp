@@ -1,4 +1,5 @@
 #include "App.hpp"
+#include "Asset.hpp"
 #include "AssetManager.hpp"
 #include "Camera.hpp"
 #include "Commands.hpp"
@@ -11,16 +12,18 @@
 
 using namespace cevy;
 using namespace ecs;
+using namespace engine;
 
 struct PlayerMarker {
   size_t i;
 };
 
-void create_player_ship(Resource<Asset<Model3D>> mod, Commands cmd) {
-  auto handle = mod.get().load(
-      Settings3D{.model = "assets/space-ship1.obj", .diffuse = "assets/space-ship1.png"});
+void create_player_ship(Resource<Asset<cevy::engine::Mesh>> meshs, Resource<Asset<Diffuse>> difs,
+                        Commands cmd) {
+  auto handle_difs = difs.get().load("assets/space-ship1.png");
+  auto handle_mesh = meshs.get().load("assets/space-ship1.obj");
 
-  cmd.spawn(Position(), Rotation(0.0, 1.0, 0.0), handle, PlayerMarker());
+  cmd.spawn(Position(), Rotation(0.0, 1.0, 0.0), handle_mesh, handle_difs, PlayerMarker());
 }
 
 std::array<float, 3> cross(std::array<float, 3> first, std::array<float, 3> second) {
@@ -31,8 +34,7 @@ std::array<float, 3> cross(std::array<float, 3> first, std::array<float, 3> seco
 }
 
 void control_object(
-    cevy::ecs::Query<cevy::Position, cevy::Rotation, cevy::Handle<cevy::Model3D>, PlayerMarker>
-        objs) {
+    Query<Position, Rotation, cevy::engine::Handle<cevy::engine::Mesh>, PlayerMarker> objs) {
   std::array<float, 3> fowards = {0.0, 1.0, 0.0};
   std::array<float, 3> right = {1.0, 0.0, 0.0};
   std::array<float, 3> up = {0.0, 0.0, 1.0};
@@ -42,46 +44,44 @@ void control_object(
                std::get<1>(obj).fowards().z};
     up = {std::get<1>(obj).up().x, std::get<1>(obj).up().y, std::get<1>(obj).up().z};
     right = cross(fowards, up);
-    if (cevy::Keyboard::keyDown(KEY_SPACE)) {
+    if (Keyboard::keyDown(KEY_SPACE)) {
       std::get<0>(obj) = {std::get<0>(obj).x + up[0] * speed, std::get<0>(obj).y + up[1] * speed,
                           std::get<0>(obj).z + up[2] * speed};
     }
-    if (cevy::Keyboard::keyDown(KEY_W)) {
+    if (Keyboard::keyDown(KEY_W)) {
       std::get<0>(obj) = {std::get<0>(obj).x + fowards[0] * speed,
                           std::get<0>(obj).y + fowards[1] * speed,
                           std::get<0>(obj).z + fowards[2] * speed};
     }
-    if (cevy::Keyboard::keyDown(KEY_A)) {
+    if (Keyboard::keyDown(KEY_A)) {
       std::get<0>(obj) = {std::get<0>(obj).x + right[0] * speed,
                           std::get<0>(obj).y + right[1] * speed,
                           std::get<0>(obj).z + right[2] * speed};
     }
-    if (cevy::Keyboard::keyDown(KEY_LEFT_SHIFT)) {
+    if (Keyboard::keyDown(KEY_LEFT_SHIFT)) {
       std::get<0>(obj) = {std::get<0>(obj).x - up[0] * speed, std::get<0>(obj).y - up[1] * speed,
                           std::get<0>(obj).z - up[2] * speed};
     }
-    if (cevy::Keyboard::keyDown(KEY_S)) {
+    if (Keyboard::keyDown(KEY_S)) {
       std::get<0>(obj) = {std::get<0>(obj).x - fowards[0] * speed,
                           std::get<0>(obj).y - fowards[1] * speed,
                           std::get<0>(obj).z - fowards[2] * speed};
     }
-    if (cevy::Keyboard::keyDown(KEY_D)) {
+    if (Keyboard::keyDown(KEY_D)) {
       std::get<0>(obj) = {std::get<0>(obj).x - right[0] * speed,
                           std::get<0>(obj).y - right[1] * speed,
                           std::get<0>(obj).z - right[2] * speed};
     }
-    if (cevy::Keyboard::keyPressed(KEY_RIGHT)) {
+    if (Keyboard::keyPressed(KEY_RIGHT)) {
     }
 
-    if (cevy::Keyboard::keyPressed(KEY_LEFT)) {
+    if (Keyboard::keyPressed(KEY_LEFT)) {
     }
   }
 }
 
-void follow_object(
-    cevy::ecs::Query<cevy::Camera, cevy::Position, cevy::Rotation> cams,
-    cevy::ecs::Query<cevy::Position, cevy::Rotation, cevy::Handle<cevy::Model3D>, PlayerMarker>
-        objs) {
+void follow_object(Query<cevy::engine::Camera, Position, Rotation> cams,
+                   Query<Position, Rotation, Handle<cevy::engine::Mesh>, PlayerMarker> objs) {
   Vector fowards = {0.0, 1.0, 0.0};
   float distance = 30;
   for (auto obj : objs) {
@@ -101,7 +101,7 @@ int main() {
   struct SpaceShip {};
   App app;
   app.init_component<PlayerMarker>();
-  app.insert_resource(cevy::AssetManager());
+  app.insert_resource(AssetManager());
   app.add_plugins(Engine());
   app.add_system<Schedule::Startup>(create_player_ship);
   app.add_system<Schedule::Update>(control_object);
