@@ -18,6 +18,6 @@ jobs:
       - name: Build
         run: cmake -DTESTS=on -S . -B ./build
       - name: Test
-        run: make -j --no-print-directory -C build tests-run-cevy
+        run: make --no-print-directory -C build tests-run
       # - name: format
       #   run: 
