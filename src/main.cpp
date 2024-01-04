@@ -5,7 +5,10 @@
 #include "Commands.hpp"
 #include "EntityCommands.hpp"
 #include "Position.hpp"
+#include "Query.hpp"
 #include "Rotation.hpp"
+#include "Schedule.hpp"
+#include "Vector.hpp"
 #include "ecs.hpp"
 #include "engine/Engine.hpp"
 #include "input.hpp"
@@ -26,77 +29,26 @@ void create_player_ship(Resource<Asset<cevy::engine::Mesh>> meshs, Resource<Asse
   cmd.spawn(Position(), Rotation(0.0, 1.0, 0.0), handle_mesh, handle_difs, PlayerMarker());
 }
 
-std::array<float, 3> cross(std::array<float, 3> first, std::array<float, 3> second) {
-  std::array<float, 3> result = {second[1] * first[2] - second[2] * first[1],
-                                 second[2] * first[0] - second[0] * first[2],
-                                 second[0] * first[1] - second[1] * first[0]};
-  return result;
-}
-
-void control_object(
-    Query<Position, Rotation, cevy::engine::Handle<cevy::engine::Mesh>, PlayerMarker> objs) {
-  std::array<float, 3> fowards = {0.0, 1.0, 0.0};
-  std::array<float, 3> right = {1.0, 0.0, 0.0};
-  std::array<float, 3> up = {0.0, 0.0, 1.0};
-  float speed = 0.5;
-  for (auto obj : objs) {
-    fowards = {std::get<1>(obj).fowards().x, std::get<1>(obj).fowards().y,
-               std::get<1>(obj).fowards().z};
-    up = {std::get<1>(obj).up().x, std::get<1>(obj).up().y, std::get<1>(obj).up().z};
-    right = cross(fowards, up);
-    if (Keyboard::keyDown(KEY_SPACE)) {
-      std::get<0>(obj) = {std::get<0>(obj).x + up[0] * speed, std::get<0>(obj).y + up[1] * speed,
-                          std::get<0>(obj).z + up[2] * speed};
+void rotate_camera(Query<cevy::engine::Camera, cevy::engine::Rotation> cams) {
+  for (auto cam : cams) {
+    auto &rot = std::get<1>(cam);
+    if (cevy::Keyboard::keyDown(KEY_A)) {
+      rot.x -= 1;
     }
-    if (Keyboard::keyDown(KEY_W)) {
-      std::get<0>(obj) = {std::get<0>(obj).x + fowards[0] * speed,
-                          std::get<0>(obj).y + fowards[1] * speed,
-                          std::get<0>(obj).z + fowards[2] * speed};
-      std::get<1>(obj).x -= 1;
+    if (cevy::Keyboard::keyDown(KEY_D)) {
+      rot.x += 1;
     }
-    if (Keyboard::keyDown(KEY_A)) {
-      std::get<0>(obj) = {std::get<0>(obj).x + right[0] * speed,
-                          std::get<0>(obj).y + right[1] * speed,
-                          std::get<0>(obj).z + right[2] * speed};
-      std::get<1>(obj).y -= 1;
+    if (cevy::Keyboard::keyDown(KEY_S)) {
+      rot.y -= 1;
     }
-    if (Keyboard::keyDown(KEY_LEFT_SHIFT)) {
-      std::get<0>(obj) = {std::get<0>(obj).x - up[0] * speed, std::get<0>(obj).y - up[1] * speed,
-                          std::get<0>(obj).z - up[2] * speed};
+    if (cevy::Keyboard::keyDown(KEY_W)) {
+      rot.y += 1;
     }
-    if (Keyboard::keyDown(KEY_S)) {
-      std::get<0>(obj) = {std::get<0>(obj).x - fowards[0] * speed,
-                          std::get<0>(obj).y - fowards[1] * speed,
-                          std::get<0>(obj).z - fowards[2] * speed};
-      std::get<1>(obj).x += 1;
+    if (cevy::Keyboard::keyDown(KEY_Q)) {
+      rot.z -= 1;
     }
-    if (Keyboard::keyDown(KEY_D)) {
-      std::get<0>(obj) = {std::get<0>(obj).x - right[0] * speed,
-                          std::get<0>(obj).y - right[1] * speed,
-                          std::get<0>(obj).z - right[2] * speed};
-      std::get<1>(obj).y += 1;
-    }
-    if (Keyboard::keyPressed(KEY_RIGHT)) {
-    }
-
-    if (Keyboard::keyPressed(KEY_LEFT)) {
-    }
-  }
-}
-
-void follow_object(Query<cevy::engine::Camera, Position, Rotation> cams,
-                   Query<Position, Rotation, Handle<cevy::engine::Mesh>, PlayerMarker> objs) {
-  Vector fowards = {0.0, 1.0, 0.0};
-  float distance = 30;
-  for (auto obj : objs) {
-    // fowards = std::get<1>(obj).fowards();
-    for (auto cam : cams) {
-      fowards = std::get<2>(cam);
-      // std::get<2>(cam) = std::get<1>(obj);
-      std::get<0>(cam).camera.target = {std::get<0>(obj).x, std::get<0>(obj).y, std::get<0>(obj).z};
-      std::get<1>(cam) = Position(std::get<0>(obj).x - fowards.x * distance,
-                                  std::get<0>(obj).y - fowards.y * distance,
-                                  std::get<0>(obj).z - fowards.z * distance);
+    if (cevy::Keyboard::keyDown(KEY_E)) {
+      rot.z += 1;
     }
   }
 }
@@ -108,8 +60,9 @@ int main() {
   app.insert_resource(AssetManager());
   app.add_plugins(Engine());
   app.add_system<Schedule::Startup>(create_player_ship);
-  app.add_system<Schedule::Update>(control_object);
-  app.add_system<Schedule::Update>(follow_object);
+  app.add_system<Schedule::Update>(rotate_camera);
+  app.spawn(cevy::engine::Camera(), cevy::engine::Position(-10.0, 10.0, 10.0),
+            cevy::engine::Rotation(0.0, 0.0, 0.0));
   app.run();
   return 0;
 }
