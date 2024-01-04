@@ -24,5 +24,5 @@ jobs:
         run: cmake -DTESTS=on -S . -B ./build
       - name: Test
         run: make --no-print-directory -C build tests-run
-      # - name: format
-      #   run: 
+      - name: format
+        run: make format
