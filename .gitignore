@@ -31,7 +31,9 @@
 *.app
 
 .vscode
+.vs
 
+out/*
 bin/*
 build/*
 lib/*
