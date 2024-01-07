@@ -31,7 +31,9 @@
 *.app
 
 .vscode
+.vs
 
+out/*
 bin/*
 build/*
 lib/*
@@ -41,3 +43,7 @@ bin
 
 .clangd
 imgui.ini
+
+assets/
+!assets/space-ship1.png
+!assets/space-ship1.obj
