@@ -8,10 +8,12 @@
 #include "Query.hpp"
 #include "Rotation.hpp"
 #include "Schedule.hpp"
+#include "Time.hpp"
 #include "Vector.hpp"
 #include "ecs.hpp"
 #include "engine/Engine.hpp"
 #include "input.hpp"
+#include "raylib.h"
 
 using namespace cevy;
 using namespace ecs;
@@ -29,25 +31,25 @@ void create_player_ship(Resource<Asset<cevy::engine::Mesh>> meshs, Resource<Asse
   cmd.spawn(Position(), Rotation(0.0, 1.0, 0.0), handle_mesh, handle_difs, PlayerMarker());
 }
 
-void rotate_camera(Query<cevy::engine::Camera, cevy::engine::Rotation> cams) {
+void rotate_camera(Resource<Time> time, Query<cevy::engine::Camera, cevy::engine::Rotation> cams) {
   for (auto [cam, rot] : cams) {
     if (cevy::Keyboard::keyDown(KEY_A)) {
-      rot.x -= 1;
+      rot.x -= 30 * time.get().delta_seconds();
     }
     if (cevy::Keyboard::keyDown(KEY_D)) {
-      rot.x += 1;
+      rot.x += 30 * time.get().delta_seconds();
     }
     if (cevy::Keyboard::keyDown(KEY_S)) {
-      rot.y -= 1;
+      rot.y -= 30 * time.get().delta_seconds();
     }
     if (cevy::Keyboard::keyDown(KEY_W)) {
-      rot.y += 1;
+      rot.y += 30 * time.get().delta_seconds();
     }
     if (cevy::Keyboard::keyDown(KEY_Q)) {
-      rot.z -= 1;
+      rot.z -= 30 * time.get().delta_seconds();
     }
     if (cevy::Keyboard::keyDown(KEY_E)) {
-      rot.z += 1;
+      rot.z += 30 * time.get().delta_seconds();
     }
   }
 }
