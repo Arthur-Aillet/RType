@@ -30,8 +30,7 @@ void create_player_ship(Resource<Asset<cevy::engine::Mesh>> meshs, Resource<Asse
 }
 
 void rotate_camera(Query<cevy::engine::Camera, cevy::engine::Rotation> cams) {
-  for (auto cam : cams) {
-    auto &rot = std::get<1>(cam);
+  for (auto [cam, rot] : cams) {
     if (cevy::Keyboard::keyDown(KEY_A)) {
       rot.x -= 1;
     }
