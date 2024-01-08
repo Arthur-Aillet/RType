@@ -32,25 +32,24 @@ void create_player_ship(Resource<Asset<cevy::engine::Mesh>> meshs, Resource<Asse
 }
 
 void rotate_camera(Resource<Time> time, Query<cevy::engine::Camera, cevy::engine::Rotation> cams) {
-  for (auto cam : cams) {
-    auto &rot = std::get<1>(cam);
+  for (auto [cam, rot] : cams) {
     if (cevy::Keyboard::keyDown(KEY_A)) {
-      rot.x -= 15 * time.get().delta_seconds();
+      rot.x -= 30 * time.get().delta_seconds();
     }
     if (cevy::Keyboard::keyDown(KEY_D)) {
-      rot.x += 15 * time.get().delta_seconds();
+      rot.x += 30 * time.get().delta_seconds();
     }
     if (cevy::Keyboard::keyDown(KEY_S)) {
-      rot.y -= 15 * time.get().delta_seconds();
+      rot.y -= 30 * time.get().delta_seconds();
     }
     if (cevy::Keyboard::keyDown(KEY_W)) {
-      rot.y += 15 * time.get().delta_seconds();
+      rot.y += 30 * time.get().delta_seconds();
     }
     if (cevy::Keyboard::keyDown(KEY_Q)) {
-      rot.z -= 15 * time.get().delta_seconds();
+      rot.z -= 30 * time.get().delta_seconds();
     }
     if (cevy::Keyboard::keyDown(KEY_E)) {
-      rot.z += 15 * time.get().delta_seconds();
+      rot.z += 30 * time.get().delta_seconds();
     }
   }
 }
