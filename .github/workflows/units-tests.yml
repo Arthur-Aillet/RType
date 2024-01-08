@@ -45,4 +45,6 @@ jobs:
       - name: Add CMake to PATH
         run: echo "/mingw64/bin" >> $GITHUB_PATH
       - name: Build
-        run: mkdir build && cd build && cmake .. -G "MinGW Makefiles" && cmake --build . && cd ..
+        run: |
+          export PATH=$PATH:/mingw64/bin
+          mkdir build && cd build && cmake .. -G "MinGW Makefiles" && cmake --build . && cd ..
