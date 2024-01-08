@@ -42,5 +42,7 @@ jobs:
           msystem: UCRT64
           update: true
           install: git mingw-w64-ucrt-x86_64-gcc mingw-w64-x86_64-cmake
+      - name: Add CMake to PATH
+        run: echo "/mingw64/bin" >> $GITHUB_PATH
       - name: Build
         run: mkdir build && cd build && cmake .. -G "MinGW Makefiles" && cmake --build . && cd ..
