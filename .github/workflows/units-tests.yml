@@ -43,4 +43,4 @@ jobs:
           update: true
           install: git mingw-w64-ucrt-x86_64-gcc
       - name: Build
-        run: cd build && cmake .. -G "MinGW Makefiles" && cmake --build . && cd ..
+        run: mkdir build && cd build && cmake .. -G "MinGW Makefiles" && cmake --build . && cd ..
