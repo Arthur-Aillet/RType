@@ -8,7 +8,6 @@ on:
 
 jobs:
   test:
-    # runs-on: [ubuntu-latest, windows-latest]
     runs-on: [ubuntu-latest]
     steps:
       - name: Checkout code
@@ -28,16 +27,20 @@ jobs:
         run: make format
 
   windows:
-    runs-on: [ubuntu-latest]
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Checkout submodules
-        run: git submodule update --init --recursive
-      - run: sudo apt install libasound2-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev
-      - run: sudo apt install libglfw3-dev
-      - run: sudo apt install libcriterion-dev
+      - name: Install MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: git mingw-w64-ucrt-x86_64-gcc
       - name: Build
-        run: cd build && cmake .. -G "MinGW Makefiles" && cmake --build . && cd ..
+        run: make build
