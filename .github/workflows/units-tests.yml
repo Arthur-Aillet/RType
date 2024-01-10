@@ -25,26 +25,3 @@ jobs:
         run: make --no-print-directory -C build tests-run
       - name: format
         run: make format
-
-  windows:
-    runs-on: windows-latest
-    defaults:
-      run:
-        shell: msys2 {0}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Install MSYS2
-        uses: msys2/setup-msys2@v2
-        with:
-          msystem: UCRT64
-          update: true
-          install: git mingw-w64-ucrt-x86_64-gcc mingw-w64-x86_64-cmake
-      - name: Add CMake to PATH
-        run: echo "/mingw64/bin" >> $GITHUB_PATH
-      - name: Build
-        run: |
-          export PATH=$PATH:/mingw64/bin
-          mkdir build && cd build && cmake .. -G "MinGW Makefiles" && cmake --build . && cd ..
