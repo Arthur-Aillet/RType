@@ -12,6 +12,7 @@
 #include "Target.hpp"
 #include "Time.hpp"
 #include "Transform.hpp"
+#include "Velocity.hpp"
 #include "Vector.hpp"
 #include "ecs.hpp"
 #include "engine/Engine.hpp"
@@ -33,32 +34,32 @@ void create_player_ship(Resource<Asset<cevy::engine::Mesh>> meshs, Resource<Asse
   auto handle_mesh = meshs.get().load("assets/space-ship1.obj");
   // handle_mesh.get().mesh.transform = MatrixRotateXYZ({0, M_PI, 0});
 
-  cmd.spawn(cevy::engine::Transform(), handle_mesh, handle_difs, PlayerMarker(), Position());
+  cmd.spawn(cevy::engine::Transform(), cevy::engine::TransformVelocity(), handle_mesh, handle_difs, PlayerMarker());
   // cmd.spawn(cevy::engine::Transform(), /*handle_mesh, handle_difs,*/ PlayerMarker());
 }
 
 void control_spaceship(Resource<Time> time, Query<Line> lines,
                        Query<cevy::engine::Camera, Target> cams,
-                       Query<PlayerMarker, cevy::engine::Transform> spaceship) {
-  for (auto [space, tm] : spaceship) {
-    float delta = 1 * time.get().delta_seconds();
+                       Query<PlayerMarker, cevy::engine::Transform, cevy::engine::TransformVelocity> spaceship) {
+  for (auto [space, tm, vel] : spaceship) {
+    float delta = 0.1 * time.get().delta_seconds();
     if (cevy::Keyboard::keyDown(KEY_W)) {
-      tm.rotateXYZ({delta, 0, 0});
+      vel.rotateXYZ({delta, 0, 0});
     }
     if (cevy::Keyboard::keyDown(KEY_S)) {
-      tm.rotateXYZ({-delta, 0, 0});
+      vel.rotateXYZ({-delta, 0, 0});
     }
     if (cevy::Keyboard::keyDown(KEY_A)) {
-      tm.rotateXYZ({0, delta, 0});
+      vel.rotateXYZ({0, delta, 0});
     }
     if (cevy::Keyboard::keyDown(KEY_D)) {
-      tm.rotateXYZ({0, -delta, 0});
+      vel.rotateXYZ({0, -delta, 0});
     }
     if (cevy::Keyboard::keyDown(KEY_E)) {
-      tm.rotateXYZ({0, 0, delta});
+      vel.rotateXYZ({0, 0, delta});
     }
     if (cevy::Keyboard::keyDown(KEY_Q)) {
-      tm.rotateXYZ({0, 0, -delta});
+      vel.rotateXYZ({0, 0, -delta});
     }
 
     auto [one, two, three] = lines.multiple<3>();
