@@ -7,7 +7,7 @@
 #include "Position.hpp"
 #include "Query.hpp"
 #include "Rotation.hpp"
-#include "Schedule.hpp"
+#include "Stage.hpp"
 #include "Time.hpp"
 #include "Vector.hpp"
 #include "ecs.hpp"
@@ -18,6 +18,7 @@
 using namespace cevy;
 using namespace ecs;
 using namespace engine;
+using namespace core_stage;
 
 struct PlayerMarker {
   size_t i;
@@ -60,8 +61,8 @@ int main() {
   app.init_component<PlayerMarker>();
   app.insert_resource(AssetManager());
   app.add_plugins(Engine());
-  app.add_system<Schedule::Startup>(create_player_ship);
-  app.add_system<Schedule::Update>(rotate_camera);
+  app.add_systems<Startup>(create_player_ship);
+  app.add_systems<Update>(rotate_camera);
   app.spawn(cevy::engine::Camera(), cevy::engine::Position(-10.0, 10.0, 10.0),
             cevy::engine::Rotation(0.0, 0.0, 0.0));
   app.run();
