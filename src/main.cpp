@@ -8,7 +8,6 @@
 #include "Line.hpp"
 #include "Position.hpp"
 #include "Query.hpp"
-#include "Schedule.hpp"
 #include "Target.hpp"
 #include "Time.hpp"
 #include "Transform.hpp"
@@ -34,7 +33,6 @@ void create_player_ship(Resource<Asset<cevy::engine::Mesh>> meshs, Resource<Asse
   // handle_mesh.get().mesh.transform = MatrixRotateXYZ({0, M_PI, 0});
 
   cmd.spawn(cevy::engine::Transform(), handle_mesh, handle_difs, PlayerMarker(), Position());
-  // cmd.spawn(cevy::engine::Transform(), /*handle_mesh, handle_difs,*/ PlayerMarker());
 }
 
 void control_spaceship(Resource<Time> time, Query<Line> lines,
@@ -92,8 +90,8 @@ int main() {
   app.init_component<PlayerMarker>();
   app.insert_resource(AssetManager());
   app.add_plugins(Engine());
-  app.add_system<Schedule::Startup>(create_player_ship);
-  app.add_system<Schedule::Update>(control_spaceship);
+  app.add_systems<core_stage::Startup>(create_player_ship);
+  app.add_systems<core_stage::Update>(control_spaceship);
   app.spawn(Line(Position(0, 0, 0), Position(5, 0, 0)), cevy::engine::Color(255, 200, 0));
   app.spawn(Line(Position(0, 0, 0), Position(0, 5, 0)), cevy::engine::Color(0, 255, 200));
   app.spawn(Line(Position(0, 0, 0), Position(0, 0, 5)), cevy::engine::Color(0, 200, 255));
