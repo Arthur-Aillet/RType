@@ -10,10 +10,14 @@
 #include <string>
 #include <functional>
 
+#include "cevy.hpp"
 #include "main.hpp"
 #include "Asset.hpp"
 #include "Diffuse.hpp"
 #include "Factory.hpp"
+#include "Transform.hpp"
+#include "Color.hpp"
+#include "Velocity.hpp"
 #include "Handle.hpp"
 #include "Indirect.hpp"
 #include "Mesh.hpp"
@@ -96,8 +100,15 @@ class SpaceShipSync : public cevy::Synchroniser, public cevy::ecs::Factory<Objec
                   make_indirect(getMesh)),
                   engine::Color(255, 0, 0);
 
-    add_spawnable<Enemy>(make_indirect(make_function([](){return engine::Transform(0, rand() % 280 - 140, 34).scaleXYZ(0.004).rotateY(180 * DEG2RAD);})),
-                  TransformVelocity(cevy::engine::Transform().translateZ(2. / 140.))
+    add_spawnable<Enemy>(
+      make_indirect(
+        make_function<cevy::engine::Transform>(
+          [](){
+                return engine::Transform(0, rand() % 280 - 140, 34).scaleXYZ(0.004).rotateY(180 * DEG2RAD);
+              }
+        )
+      ),
+                  TransformVelocity(cevy::engine::Transform().translateZ(2. / 140.)),
                   make_indirect(getDiffuse),
                   make_indirect(getEnemyMesh));
 

@@ -12,6 +12,7 @@
 #include "Vector.hpp"
 #include "Velocity.hpp"
 #include "input.hpp"
+#include "network/CevyNetwork.hpp"
 #include "raylib.h"
 #include "raylib.hpp"
 #include <cstdlib>
@@ -19,6 +20,7 @@
 #include "main.hpp"
 #include "SpaceShipSync.hpp"
 #include "ShipActions.hpp"
+#include "network/NetworkPlugin.hpp"
 
 using namespace cevy;
 using namespace ecs;
@@ -71,7 +73,7 @@ void spawn_enemies(Resource<Time> time, Resource<EnemySpawner> spawner, Commands
     //   engine::Transform(0, y / 10, 34).scaleXYZ(0.004).rotateY(180 * DEG2RAD),
     //   TransformVelocity(cevy::engine::Transform().translateZ(-11 - y / 140)));
     netcmd.get().summon<Enemy>();
-    clock.setDuration(clock.duration().count() - clock.duration().count() * (spawner.get().spawn_increase_perc/100));
+    // clock.setDuration(clock.duration().count() - clock.duration().count() * (spawner.get().spawn_increase_perc/100));
     clock.reset();
   }
 }
@@ -109,7 +111,7 @@ void control_spaceship(
     v.z -= 1;
   v = v.normalize() * space.move_speed;
   vel.setPositionXYZ(v);
-  netcmd.get().action_with<Fly>(v);
+  netcmd.get().action_with<ShipActions::Fly>(v);
 }
 
 void set_background(Resource<ClearColor> col) {
@@ -122,7 +124,7 @@ int main(int argc, char **argv) {
     app.init_component<PlayerStats>();
     app.insert_resource(AssetManager());
     app.add_plugins(Engine());
-    app.add_plugin(std::move(NetworkPlugin<SpaceShipSync, ShipActions>(CevyNetwork(cevy::NetworkBase::NetworkMode::Server, "127.0.0.1", 12345, 54321, 0))));
+    app.emplace_plugin<NetworkPlugin<SpaceShipSync, ShipActions>>(cevy::NetworkBase::NetworkMode::Server, "127.0.0.1", 12345, 54321, 0);
     app.add_systems<core_stage::Update>(spawn_enemies);
     app.run();
   } else {
@@ -135,7 +137,7 @@ int main(int argc, char **argv) {
     app.add_systems<core_stage::Startup>(set_background);
     app.add_systems<core_stage::Update>(control_spaceship);
     app.add_systems(spawn_bullet);
-    app.add_plugin(std::move(NetworkPlugin<SpaceShipSync, ShipActions>(CevyNetwork(cevy::NetworkBase::NetworkMode::Client, "127.0.0.1", 12345, 54321, 1))));
+    app.emplace_plugin<NetworkPlugin<SpaceShipSync, ShipActions>>(cevy::NetworkBase::NetworkMode::Client, "127.0.0.1", 12345, 54321, 1);
     app.run();
   }
   return 0;
