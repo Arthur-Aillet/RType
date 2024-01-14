@@ -13,6 +13,8 @@
 #include "ecs.hpp"
 #include "engine/Engine.hpp"
 #include "input.hpp"
+#include "network/NetworkBase.hpp"
+#include "network/network.hpp"
 #include "raylib.h"
 
 using namespace cevy;
@@ -54,7 +56,7 @@ void rotate_camera(Resource<Time> time, Query<cevy::engine::Camera, cevy::engine
   }
 }
 
-int main() {
+int main(int ac) {
   struct SpaceShip {};
   App app;
   app.init_component<PlayerMarker>();
@@ -64,6 +66,16 @@ int main() {
   app.add_system<Schedule::Update>(rotate_camera);
   app.spawn(cevy::engine::Camera(), cevy::engine::Position(-10.0, 10.0, 10.0),
             cevy::engine::Rotation(0.0, 0.0, 0.0));
-  app.run();
+
+  // cevy::NetworkBase ntw("127.0.0.1", 54321);
+  if (ac == 1) {
+    std::cout<<"server"<<std::endl;
+    cevy::NetworkBase::start_server();
+  } else {
+    std::cout<<"client"<<std::endl;
+    cevy::NetworkBase::start_client("127.0.0.1");
+  }
+  // app.run();
   return 0;
+
 }
