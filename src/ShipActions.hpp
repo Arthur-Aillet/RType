@@ -12,7 +12,7 @@
 #include "network/network.hpp"
 #include "network/CevyNetwork.hpp"
 
-class ShipActions : cevy::NetworkActions {
+class ShipActions : public cevy::NetworkActions {
 public:
     ShipActions(cevy::CevyNetwork &net) : NetworkActions(net) {};
 
@@ -30,6 +30,7 @@ public:
 
     void build(cevy::ecs::App& app) override {
         add_event_with<myEvent>((boomEvent));
+        std::cout << Shoot::value << std::endl;
         add_action<Shoot>(shootServerAction, shootAction, shootAction);
         add_action_with<Fly>(flyServerAction, flySuccessAction, flyFailureAction);
     }
@@ -45,12 +46,12 @@ public:
     }
 
     static EActionFailureMode flyServerAction(cevy::engine::Vector vec, cevy::ecs::Query<> q) {return cevy::CevyNetwork::ActionFailureMode::EActionFailureMode::Action_Success;};
-    static void flySuccessAction(cevy::engine::Vector vec, cevy::ecs::Query<> q) {};
-    static void flyFailureAction(cevy::engine::Vector vec, cevy::ecs::Query<> q) {};
+    static bool flySuccessAction(cevy::engine::Vector vec, cevy::ecs::Query<> q) {};
+    static bool flyFailureAction(cevy::engine::Vector vec, cevy::ecs::Query<> q) {};
 
     static EActionFailureMode shootServerAction(cevy::ecs::Query<> q) {return cevy::CevyNetwork::ActionFailureMode::EActionFailureMode::Action_Success;};
-    static void shootAction(cevy::ecs::Query<> q) {};
+    static bool shootAction(cevy::ecs::Query<> q) {};
 
-    static void boomEvent(int a, cevy::ecs::Query<> q) {};
+    static bool boomEvent(int a, cevy::ecs::Query<> q) {};
 private:
 };

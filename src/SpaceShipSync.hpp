@@ -12,7 +12,9 @@
 #include "Asset.hpp"
 #include "Diffuse.hpp"
 #include "Factory.hpp"
+#include "Handle.hpp"
 #include "Indirect.hpp"
+#include "Mesh.hpp"
 #include "cevy.hpp"
 #include "ecs.hpp"
 #include "ecs/App.hpp"
@@ -24,9 +26,15 @@
 #include "network/CevyNetwork.hpp"
 #include <functional>
 
-enum class Objects {
-  Ship = 1,
+enum Objects {
+  EShip = 1,
 };
+
+using Ship = cevy::Synchroniser::Spawnable<Objects::EShip,
+  cevy::engine::Position(),
+  cevy::engine::Rotation(),
+  cevy::engine::Handle<cevy::engine::Diffuse>,
+  cevy::engine::Handle<cevy::engine::Mesh>>;
 
 class SpaceShipSync : public cevy::Synchroniser, public cevy::ecs::Factory<Objects> {
   public:
@@ -56,7 +64,7 @@ class SpaceShipSync : public cevy::Synchroniser, public cevy::ecs::Factory<Objec
 
     add_sync<PositionSync, cevy::engine::Position, cevy::engine::Rotation>(app);
 
-    add_spawnable((uint8_t)Objects::Ship, cevy::engine::Position(), cevy::engine::Rotation(),
+    add_spawnable<Ship>(cevy::engine::Position(), cevy::engine::Rotation(),
                   make_indirect(getDiffuse), make_indirect(getMesh));
     // add_spawnable((uint8_t)Objects::Ship, Objects::Ship);
     // registerBundle(Objects::Ship, cevy::Position(), cevy::Rotation(),
