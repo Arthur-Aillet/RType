@@ -1,6 +1,4 @@
 #include "App.hpp"
-#include "Asset.hpp"
-#include "AssetManager.hpp"
 #include "Camera.hpp"
 #include "ClearColor.hpp"
 #include "Color.hpp"
@@ -10,37 +8,21 @@
 #include "Query.hpp"
 #include "Resource.hpp"
 #include "Stage.hpp"
-#include "Time.hpp"
-#include "Timer.hpp"
 #include "Transform.hpp"
 #include "Vector.hpp"
 #include "Velocity.hpp"
-#include "ecs.hpp"
-#include "engine/Engine.hpp"
 #include "input.hpp"
 #include "raylib.h"
 #include "raylib.hpp"
 #include <cstdlib>
+#include <string.h>
+#include "main.hpp"
+#include "SpaceShipSync.hpp"
+#include "ShipActions.hpp"
 
 using namespace cevy;
 using namespace ecs;
 using namespace engine;
-
-struct EnemySpawner {
-  Timer time_before_spawn;
-  double spawn_increase_perc;
-  Handle<cevy::engine::Mesh> handle;
-};
-
-struct PlayerStats {
-  size_t i;
-  Timer time_before_shoot;
-  float move_speed;
-};
-
-struct BulletHandle {
-  Handle<cevy::engine::Mesh> handle;
-};
 
 void initial_setup(Resource<Asset<cevy::engine::Mesh>> mash_manager, Resource<Asset<Diffuse>> difs,
                     Commands cmd, World &w) {
@@ -52,6 +34,7 @@ void initial_setup(Resource<Asset<cevy::engine::Mesh>> mash_manager, Resource<As
   w.insert_resource(BulletHandle{bullet});
   // Spawn Player 0
   cmd.spawn(engine::Transform().rotateX(-90 * DEG2RAD), TransformVelocity(), handle_mesh,
+            engine::Color(255, 0, 0),
             PlayerStats{0, Timer(1, Timer::Once).set_elapsed(2), 13});
   // Spawn Camera Planet
   cmd.spawn(cevy::engine::Camera(),
@@ -77,16 +60,17 @@ void initial_setup(Resource<Asset<cevy::engine::Mesh>> mash_manager, Resource<As
             PhysicsProps().setDecay(0), engine::Transform(50, -30, -30).scaleXYZ(12));
 }
 
-void spawn_enemies(Resource<Time> time, Resource<EnemySpawner> spawner, Commands cmd) {
+void spawn_enemies(Resource<Time> time, Resource<EnemySpawner> spawner, Commands cmd, Resource<NetworkCommands> netcmd) {
   auto &clock = spawner.get().time_before_spawn;
 
   clock.tick(time.get().delta());
 
   if (clock.finished()) {
     float y = rand() % 280 - 140;
-    cmd.spawn(spawner.get().handle,
-      engine::Transform(0, y / 10, 34).scaleXYZ(0.004).rotateY(180 * DEG2RAD),
-      TransformVelocity(cevy::engine::Transform().translateZ(-11 - y / 140)));
+    // cmd.spawn(spawner.get().handle,
+    //   engine::Transform(0, y / 10, 34).scaleXYZ(0.004).rotateY(180 * DEG2RAD),
+    //   TransformVelocity(cevy::engine::Transform().translateZ(-11 - y / 140)));
+    netcmd.get().summon<Enemy>();
     clock.setDuration(clock.duration().count() - clock.duration().count() * (spawner.get().spawn_increase_perc/100));
     clock.reset();
   }
@@ -110,37 +94,49 @@ void spawn_bullet(Resource<Asset<cevy::engine::Mesh>> meshs, Resource<BulletHand
 
 void control_spaceship(
     Resource<Time> time,
-    Query<PlayerStats, cevy::engine::Transform, cevy::engine::TransformVelocity> spaceship) {
-  for (auto [space, tm, vel] : spaceship) {
-    Vector v{};
+    Query<PlayerStats, cevy::engine::Transform, cevy::engine::TransformVelocity, PlayerMarker> spaceship,
+    Resource<NetworkCommands> netcmd) {
+  auto [space, tm, vel, marker] = spaceship.single();
+  Vector v{};
 
-    if (cevy::Keyboard::keyDown(KEY_W) && tm.position.y < 15.5)
-      v.y += 1;
-    if (cevy::Keyboard::keyDown(KEY_S) && tm.position.y > -15.5)
-      v.y -= 1;
-    if (cevy::Keyboard::keyDown(KEY_D) && tm.position.z < 28.5)
-      v.z += 1;
-    if (cevy::Keyboard::keyDown(KEY_A) && tm.position.z > -28.5)
-      v.z -= 1;
-    vel.setPositionXYZ(v.normalize() * space.move_speed);
-  }
+  if (cevy::Keyboard::keyDown(KEY_W) && tm.position.y < 15.5)
+    v.y += 1;
+  if (cevy::Keyboard::keyDown(KEY_S) && tm.position.y > -15.5)
+    v.y -= 1;
+  if (cevy::Keyboard::keyDown(KEY_D) && tm.position.z < 28.5)
+    v.z += 1;
+  if (cevy::Keyboard::keyDown(KEY_A) && tm.position.z > -28.5)
+    v.z -= 1;
+  v = v.normalize() * space.move_speed;
+  vel.setPositionXYZ(v);
+  netcmd.get().action_with<Fly>(v);
 }
 
 void set_background(Resource<ClearColor> col) {
   col.get() = ClearColor(cevy::engine::Color(0, 0, 0));
 }
 
-int main() {
-  struct SpaceShip {};
-  App app;
-  app.init_component<PlayerStats>();
-  app.insert_resource(AssetManager());
-  app.add_plugins(Engine());
-  app.add_systems<core_stage::Startup>(initial_setup);
-  app.add_systems<core_stage::Startup>(set_background);
-  app.add_systems<core_stage::Update>(spawn_enemies);
-  app.add_systems<core_stage::Update>(control_spaceship);
-  app.add_systems(spawn_bullet);
-  app.run();
+int main(int argc, char **argv) {
+  if(argc == 1 && strcmp(argv[0], "server") == 0) {
+    App app;
+    app.init_component<PlayerStats>();
+    app.insert_resource(AssetManager());
+    app.add_plugins(Engine());
+    app.add_plugin(std::move(NetworkPlugin<SpaceShipSync, ShipActions>(CevyNetwork(cevy::NetworkBase::NetworkMode::Server, "127.0.0.1", 12345, 54321, 0))));
+    app.add_systems<core_stage::Update>(spawn_enemies);
+    app.run();
+  } else {
+    struct SpaceShip {};
+    App app;
+    app.init_component<PlayerStats>();
+    app.insert_resource(AssetManager());
+    app.add_plugins(Engine());
+    app.add_systems<core_stage::Startup>(initial_setup);
+    app.add_systems<core_stage::Startup>(set_background);
+    app.add_systems<core_stage::Update>(control_spaceship);
+    app.add_systems(spawn_bullet);
+    app.add_plugin(std::move(NetworkPlugin<SpaceShipSync, ShipActions>(CevyNetwork(cevy::NetworkBase::NetworkMode::Client, "127.0.0.1", 12345, 54321, 1))));
+    app.run();
+  }
   return 0;
 }
