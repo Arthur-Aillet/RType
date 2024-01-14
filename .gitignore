@@ -45,5 +45,6 @@ bin
 imgui.ini
 
 assets/
-!assets/space-ship1.png
-!assets/space-ship1.obj
+!assets/*.png
+!assets/*.gltf
+!assets/*.bin
