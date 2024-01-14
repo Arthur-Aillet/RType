@@ -15,8 +15,10 @@
 #include "Vector.hpp"
 #include "Velocity.hpp"
 #include "ecs.hpp"
-#include "engine/Engine.hpp"
-#include "input.hpp"
+#include "Engine.hpp"
+#include "Input.hpp"
+#include "Keyboard.hpp"
+#include "raylib.h"
 #include "raylib.hpp"
 #include <iostream>
 
@@ -43,7 +45,7 @@ void spawn_entities(Resource<Asset<cevy::engine::Mesh>> mash_manager, Resource<A
   w.insert_resource(BulletHandle{bullet});
   // Spawn Player 0
   cmd.spawn(engine::Transform().rotateX(-90 * DEG2RAD), TransformVelocity(), handle_mesh,
-            PlayerStats{0, Timer(1, cevy::engine::Timer::Once).set_elapsed(2), 7});
+            PlayerStats{0, Timer(1, cevy::engine::Timer::Once).set_elapsed(1), 7});
   // Spawn Camera Planet
   cmd.spawn(cevy::engine::Camera(),
             cevy::engine::Transform(Vector(-40, 0, 0)).setRotationY(90 * DEG2RAD));
@@ -72,12 +74,12 @@ void spawn_entities(Resource<Asset<cevy::engine::Mesh>> mash_manager, Resource<A
 }
 
 void spawn_bullet(Resource<Asset<cevy::engine::Mesh>> meshs, Resource<BulletHandle> bullet_handle,
-                  Resource<Time> time, Resource<Asset<Diffuse>> difs, Commands cmd,
+                  Resource<Time> time, Resource<Asset<Diffuse>> difs, Resource<cevy::engine::Input<Keyboard>> keys,Commands cmd,
                   Query<PlayerStats, cevy::engine::Transform> players) {
   for (auto [player_stats, tm] : players) {
     player_stats.time_before_shoot.tick(time.get().delta());
     if (player_stats.time_before_shoot.finished()) {
-      if (cevy::Keyboard::keyDown(KEY_SPACE)) {
+      if (keys.get().pressed(KEY_SPACE)) {
        cmd.spawn(
         bullet_handle.get().handle, TransformVelocity(cevy::engine::Transform().setPositionZ(1)),
         engine::Transform(tm.position).translateZ(1).rotateX(90 * DEG2RAD).scaleXYZ(0.002));
@@ -95,14 +97,14 @@ void control_spaceship(
 
     vel.position.y = 0;
     vel.position.z = 0;
-    if (cevy::Keyboard::keyDown(KEY_W) && tm.position.y < 15.5)
-      vel.translateY(delta);
-    if (cevy::Keyboard::keyDown(KEY_S) && tm.position.y > -15.5)
-      vel.translateY(-delta);
-    if (cevy::Keyboard::keyDown(KEY_D) && tm.position.z < 28.5)
-      vel.translateZ(delta);
-    if (cevy::Keyboard::keyDown(KEY_A) && tm.position.z > -28.5)
-      vel.translateZ(-delta);
+    //if (cevy::Keyboard::keyDown(KEY_W) && tm.position.y < 15.5)
+    //  vel.translateY(delta);
+    //if (cevy::Keyboard::keyDown(KEY_S) && tm.position.y > -15.5)
+    //  vel.translateY(-delta);
+    //if (cevy::Keyboard::keyDown(KEY_D) && tm.position.z < 28.5)
+    //  vel.translateZ(delta);
+    //if (cevy::Keyboard::keyDown(KEY_A) && tm.position.z > -28.5)
+    //  vel.translateZ(-delta);
   }
 }
 
