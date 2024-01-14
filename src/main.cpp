@@ -8,6 +8,7 @@
 #include "EntityCommands.hpp"
 #include "Line.hpp"
 #include "Query.hpp"
+#include "Resource.hpp"
 #include "Target.hpp"
 #include "Time.hpp"
 #include "Transform.hpp"
@@ -28,22 +29,44 @@ struct PlayerMarker {
   size_t i;
 };
 
-void spawn_entities(Resource<Asset<cevy::engine::Mesh>> meshs, Resource<Asset<Diffuse>> difs,
-                    Commands cmd) {
-  auto handle_mesh = meshs.get().load("assets/player.gltf");
-  // handle_mesh.get().mesh.transform = MatrixRotateXYZ({0, M_PI, 0});
+struct BulletHandle {
+  Handle<cevy::engine::Mesh> handle;
+};
 
+void spawn_entities(Resource<Asset<cevy::engine::Mesh>> mash_manager, Resource<Asset<Diffuse>> difs,
+                    Commands cmd, World &w) {
+  auto &meshs = mash_manager.get();
+  auto handle_mesh = meshs.load("assets/player.gltf");
+  auto bullet = meshs.load("assets/grenade.gltf");
+
+  w.insert_resource(BulletHandle{bullet});
   cmd.spawn(engine::Transform().rotateX(-90 * DEG2RAD),
             TransformVelocity(cevy::engine::Transform(0, 0, 0)), handle_mesh, PlayerMarker());
-  cmd.spawn(meshs.get().load("assets/gas.gltf"), engine::Transform(0, 2, 0)); // Gas
-  cmd.spawn(meshs.get().load("assets/star.gltf"), engine::Transform(0, 4, 0),
+  cmd.spawn(meshs.load("assets/gas.gltf"),
+            TransformVelocity(cevy::engine::Transform().setRotationY(3 * DEG2RAD)),
+            engine::Transform(300, -30, 150).scaleXYZ(80)); // Gas
+  cmd.spawn(meshs.load("assets/star.gltf"), engine::Transform(400, 40, -100).scaleXYZ(20),
             engine::Color(255, 250, 215)); // Broken - Used as Star
-  cmd.spawn(meshs.get().load("assets/frozen.gltf"), engine::Transform(0, 12, 0));
-  cmd.spawn(meshs.get().load("assets/continental.gltf"),
-            engine::Transform(0, 6, 0));
-  cmd.spawn(meshs.get().load("assets/smac.gltf"), engine::Transform(0, 8, 0)); // Smac
-  cmd.spawn(meshs.get().load("assets/grenade.gltf"), engine::Transform(0, 16, 0));
-  cmd.spawn(meshs.get().load("assets/enemy.gltf"), engine::Transform(0, 10, 0));
+  cmd.spawn(meshs.load("assets/frozen.gltf"), engine::Transform(300, -12, -50).scaleXYZ(30),
+            TransformVelocity(cevy::engine::Transform().setRotationY(3 * DEG2RAD)));
+  cmd.spawn(meshs.load("assets/continental.gltf"),
+            TransformVelocity(cevy::engine::Transform().setRotationY(3 * DEG2RAD)),
+            engine::Transform(700, 100, -220).scaleXYZ(30));
+  cmd.spawn(meshs.load("assets/smac.gltf"),
+            TransformVelocity(cevy::engine::Transform().setRotationY(3 * DEG2RAD)),
+            engine::Transform(50, -30, -30).scaleXYZ(12)); // Smac
+  cmd.spawn(meshs.load("assets/enemy.gltf"),
+            engine::Transform(0, 10, 0).scaleXYZ(0.004).rotateY(180 * DEG2RAD));
+}
+
+void spawn_bullet(Resource<Asset<cevy::engine::Mesh>> meshs, Resource<BulletHandle> bullet_handle,
+                  Resource<Asset<Diffuse>> difs, Commands cmd, Query<PlayerMarker, cevy::engine::Transform> players) {
+  for (auto [_, tm] : players) {
+    if (cevy::Keyboard::keyDown(KEY_SPACE))
+      cmd.spawn(bullet_handle.get().handle,
+                TransformVelocity(cevy::engine::Transform().setPositionZ(1)),
+                engine::Transform(tm.position).translateZ(5).rotateX(90 * DEG2RAD).scaleXYZ(0.002));
+  }
 }
 
 void control_spaceship(
@@ -79,6 +102,7 @@ int main() {
   app.add_systems<core_stage::Startup>(spawn_entities);
   app.add_systems<core_stage::Startup>(set_background);
   app.add_systems<core_stage::Update>(control_spaceship);
+  app.add_systems(spawn_bullet);
   app.spawn(cevy::engine::Camera(),
             cevy::engine::Transform(Vector(-40, 0, 0)).setRotationY(90 * DEG2RAD));
   app.run();
