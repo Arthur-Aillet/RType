@@ -8,13 +8,14 @@
 #include "Query.hpp"
 #include "Rotation.hpp"
 #include "Schedule.hpp"
+#include "SpaceShipSync.hpp"
+#include "ShipActions.hpp"
 #include "Time.hpp"
 #include "Vector.hpp"
 #include "ecs.hpp"
 #include "engine/Engine.hpp"
 #include "input.hpp"
-#include "network/NetworkBase.hpp"
-#include "network/network.hpp"
+#include "network/NetworkPlugin.hpp"
 #include "raylib.h"
 
 using namespace cevy;
@@ -56,7 +57,7 @@ void rotate_camera(Resource<Time> time, Query<cevy::engine::Camera, cevy::engine
   }
 }
 
-int main(int ac) {
+int main(int ac, char **argv) {
   struct SpaceShip {};
   App app;
   app.init_component<PlayerMarker>();
@@ -67,15 +68,35 @@ int main(int ac) {
   app.spawn(cevy::engine::Camera(), cevy::engine::Position(-10.0, 10.0, 10.0),
             cevy::engine::Rotation(0.0, 0.0, 0.0));
 
+
+    // void start_server() {
+    // NetworkBase server = NetworkBase(cevy::NetworkBase::NetworkMode::Server, "127.0.0.1", 12345, 54321, 1);
+    // std::cout << "setting up acceptor;" << std::endl;
+    // server.tcp_accept_new_connexion();
+    // std::cout << "setting up udp read;" << std::endl;
+    // // server.readUDP();
+    // server.start_thread();
+    // std::cout << "running" << std::endl;
+    // server._nw_thread.join();
+    // }
+
+    // void start_client() {
+    //       NetworkBase client = NetworkBase(cevy::NetworkBase::NetworkMode::Client, "127.0.0.1", 12345, 54321, 1);
+    // client.tcp_client_connect();
+    // client.start_thread();
+    // client._nw_thread.join();
+    // }
+
+
+  // CevyNetwork(NetworkMode mode, const std::string &endpoint, size_t udp_port, size_t tcp_port,
+  //             size_t client_offset) : NetworkBase(mode, endpoint, udp_port, tcp_port, client_offset){};
+
   // cevy::NetworkBase ntw("127.0.0.1", 54321);
   if (ac == 1) {
-    std::cout<<"server"<<std::endl;
-    cevy::NetworkBase::start_server();
+    NetworkPlugin<SpaceShipSync, ShipActions>(CevyNetwork(cevy::NetworkBase::NetworkMode::Server, "127.0.0.1", 12345, 54321, 0));
   } else {
-    std::cout<<"client"<<std::endl;
-    cevy::NetworkBase::start_client("127.0.0.1");
+    NetworkPlugin<SpaceShipSync, ShipActions>(CevyNetwork(cevy::NetworkBase::NetworkMode::Client, "127.0.0.1", 12345, 54321, 1));
   }
-  // app.run();
   return 0;
 
 }
