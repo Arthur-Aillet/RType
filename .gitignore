@@ -44,7 +44,3 @@ bin
 .clangd
 imgui.ini
 
-assets/
-!assets/*.png
-!assets/*.gltf
-!assets/*.bin

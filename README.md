@@ -23,3 +23,8 @@ to discuss what you would like to change.
 - [Ludovic De-Chavagnac](https://github.com/Ludofr3)
 - [Auguste Frater](https://github.com/augustefrater)
 - [Arthur Aillet](https://github.com/Arthur-Aillet)
+
+## Credits
+
+For this project, we have used multiple 3D models obtained online,
+you can find the respective credits in the [CREDITS file](./CREDITS)
