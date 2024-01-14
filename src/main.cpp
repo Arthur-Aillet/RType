@@ -12,6 +12,7 @@
 #include "Time.hpp"
 #include "Transform.hpp"
 #include "Vector.hpp"
+#include "Velocity.hpp"
 #include "ecs.hpp"
 #include "engine/Engine.hpp"
 #include "input.hpp"
@@ -32,7 +33,7 @@ void spawn_entities(Resource<Asset<cevy::engine::Mesh>> meshs, Resource<Asset<Di
   auto handle_mesh = meshs.get().load("assets/player.gltf");
   // handle_mesh.get().mesh.transform = MatrixRotateXYZ({0, M_PI, 0});
 
-  cmd.spawn(engine::Transform().rotateX(-90 * DEG2RAD), handle_mesh, PlayerMarker());
+  cmd.spawn(engine::Transform().rotateX(-90 * DEG2RAD), TransformVelocity(cevy::engine::Transform(0, 0, 1)), handle_mesh, PlayerMarker());
   cmd.spawn(meshs.get().load("assets/gas.gltf"), engine::Transform(0, 2, 0)); // Gas
   cmd.spawn(meshs.get().load("assets/star.gltf"), engine::Transform(0, 4, 0),
             engine::Color(255, 250, 215)); // Broken - Used as Star
@@ -46,41 +47,38 @@ void spawn_entities(Resource<Asset<cevy::engine::Mesh>> meshs, Resource<Asset<Di
 
 void control_spaceship(Resource<Time> time, Query<Line> lines,
                        Query<cevy::engine::Camera, cevy::engine::Transform> cams,
-                       Query<PlayerMarker, cevy::engine::Transform> spaceship) {
-  for (auto [space, tm] : spaceship) {
-    //Account for model rotation
+                       Query<PlayerMarker, cevy::engine::Transform, cevy::engine::TransformVelocity> spaceship) {
+  for (auto [space, tm, vel] : spaceship) {
     tm.rotateX(90 * DEG2RAD);
-    float delta = 90 * time.get().delta_seconds() * DEG2RAD;
+    float delta = 5 * time.get().delta_seconds() * DEG2RAD;
 
     if (cevy::Keyboard::keyDown(KEY_W)) {
-      tm.rotateX(delta);
+      vel.rotateX(delta);
     }
     if (cevy::Keyboard::keyDown(KEY_S)) {
-      tm.rotateX(-delta);
+      vel.rotateX(-delta);
     }
     if (cevy::Keyboard::keyDown(KEY_A)) {
-      tm.rotateY(delta);
+      vel.rotateY(delta);
     }
     if (cevy::Keyboard::keyDown(KEY_D)) {
-      tm.rotateY(-delta);
+      vel.rotateY(-delta);
     }
     if (cevy::Keyboard::keyDown(KEY_E)) {
-      tm.rotateZ(delta);
+      vel.rotateZ(delta);
     }
     if (cevy::Keyboard::keyDown(KEY_Q)) {
-      tm.rotateZ(-delta);
+      vel.rotateZ(-delta);
     }
     auto [cam, cam_tranform] = cams.single();
 
-    Vector fwd = cevy::engine::Vector(0, 0, 1);
-    fwd.rotate(tm.rotation);
-    static float speed = 1;
-    // speed += 0.0005;
+    vel.setPositionXYZ(tm.fwd() * 0.5);
 
-    if (cevy::Keyboard::keyDown(KEY_UP))
-      tm.position += fwd * (delta + speed);
-    if (cevy::Keyboard::keyDown(KEY_DOWN))
-      tm.position -= fwd * (delta + speed);
+    // Vector fwd = cevy::engine::Vector(0, 0, 1);
+    // fwd.rotate(tm.rotation);
+    // static float speed = 0;
+    // speed += 0.0005;
+    // tm.position += fwd * (delta + speed);
 
     cam_tranform.rotation = tm.rotation;
     cam_tranform.position = cevy::engine::Vector(0, 3, -10);
