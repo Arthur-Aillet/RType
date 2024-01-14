@@ -5,6 +5,7 @@
 #include "ClearColor.hpp"
 #include "Color.hpp"
 #include "Commands.hpp"
+#include "Entity.hpp"
 #include "EntityCommands.hpp"
 #include "PhysicsProps.hpp"
 #include "Query.hpp"
@@ -32,13 +33,17 @@ struct EnemySpawner {
   Handle<cevy::engine::Mesh> handle;
 };
 
-struct Box {
+struct Enemie_stats {
   float x;
   float y;
   float z;
 };
 
-struct Bullet {};
+struct EntityCmp {
+  Entity id;
+};
+
+struct Bullet { };
 
 struct PlayerStats {
   size_t i;
@@ -85,17 +90,19 @@ void initial_setup(Resource<Asset<cevy::engine::Mesh>> mash_manager, Resource<As
             PhysicsProps().setDecay(0), engine::Transform(50, -30, -30).scaleXYZ(12));
 }
 
-void detect_collisions(Query<Box, engine::Transform> enemies,
-                       Query<Bullet, engine::Transform> bullets) {
-  for (auto [box, e_tf] : enemies) {
-    for (auto [b, b_tf] : bullets) {
+void detect_collisions(Query<Enemie_stats, engine::Transform, EntityCmp> enemies,
+                       Query<Bullet, engine::Transform, EntityCmp> bullets,
+                       Commands cmd) {
+  for (auto [box, e_tf, e_en] : enemies) {
+    for (auto [b, b_tf, b_en] : bullets) {
       if (b_tf.position.x < e_tf.position.x + (box.x / 2) &&
           b_tf.position.x > e_tf.position.x - (box.x / 2) &&
           b_tf.position.y < e_tf.position.y + (box.y / 2) &&
           b_tf.position.y > e_tf.position.y - (box.y / 2) &&
           b_tf.position.z < e_tf.position.z + (box.z / 2) &&
           b_tf.position.z > e_tf.position.z - (box.z / 2)) {
-          std::cout << "Touched" << std::endl;
+          cmd.despawn(e_en.id);
+          cmd.despawn(b_en.id);
       }
     }
   }
@@ -108,10 +115,12 @@ void spawn_enemies(Resource<Time> time, Resource<EnemySpawner> spawner, Commands
 
   if (clock.finished()) {
     float y = rand() % 280 - 140;
-    cmd.spawn(spawner.get().handle,
+    Enemie_stats e {100, 5, 10};
+    auto a = cmd.spawn(spawner.get().handle,
               engine::Transform(0, y / 10, 34).scaleXYZ(0.004).rotateY(180 * DEG2RAD),
-              TransformVelocity(cevy::engine::Transform().translateZ(-11 - y / 140)),
-              Box{100, 5, 10});
+              TransformVelocity(cevy::engine::Transform().translateZ(-11 - y / 140)), e
+              );
+    a.insert(EntityCmp{a.id()});
     clock.setDuration(clock.duration().count() -
                       clock.duration().count() * (spawner.get().spawn_increase_perc / 100));
     clock.reset();
@@ -125,10 +134,11 @@ void spawn_bullet(Resource<Asset<cevy::engine::Mesh>> meshs, Resource<BulletHand
     player_stats.time_before_shoot.tick(time.get().delta());
     if (player_stats.time_before_shoot.finished()) {
       if (cevy::Keyboard::keyDown(KEY_SPACE)) {
-        cmd.spawn(
+        auto a = cmd.spawn(
             Bullet{}, bullet_handle.get().handle,
             TransformVelocity(cevy::engine::Transform().setPositionZ(30)),
             engine::Transform(tm.position).translateZ(1).rotateX(90 * DEG2RAD).scaleXYZ(0.004));
+        a.insert(EntityCmp{a.id()});
         player_stats.time_before_shoot.reset();
       }
     }
@@ -161,8 +171,9 @@ int main() {
   struct SpaceShip {};
   App app;
   app.init_component<PlayerStats>();
-  app.init_component<Box>();
+  app.init_component<Enemie_stats>();
   app.init_component<Bullet>();
+  app.init_component<EntityCmp>();
   app.insert_resource(AssetManager());
   app.add_plugins(Engine());
   app.add_systems<core_stage::Startup>(initial_setup);
