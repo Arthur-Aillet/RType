@@ -1,0 +1,106 @@
+on:
+  workflow_dispatch:
+
+name: Create Release Minor Asset
+
+jobs:
+  test:
+    name: Test R-Type project
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Checkout submodules
+        run: git submodule update --init --recursive
+      - run: sudo apt install libasound2-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev
+      - run: sudo apt install libglfw3-dev
+      - run: sudo apt install libcriterion-dev
+      - name: Test project
+        run: make test
+
+  build:
+    name: Upload Release Asset
+    permissions:
+      contents: write
+      pull-requests: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Checkout submodules
+        run: git submodule update --init --recursive
+      - run: sudo apt install libasound2-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev
+      - run: sudo apt install libglfw3-dev
+      - run: sudo apt install libcriterion-dev
+      - name: Build project
+        run: make build
+
+      - name: Get next version
+        uses: reecetech/version-increment@2023.9.3
+        id: version
+        with:
+          scheme: semver
+          increment: minor
+      - name: Create and push tag
+        run: |
+          git tag ${{ steps.version.outputs.version }}
+          git push origin ${{ steps.version.outputs.version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Release
+        id: create_release
+        uses: release-drafter/release-drafter@v5
+        with:
+          config-name: release-drafter-minor.yml
+          name: ${{ steps.version.outputs.version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Source Code Packaging with CPack
+        run: |
+          make package_sources
+          mv ./build/_CPack_Packages/Linux/ZIP/R-Type-1-0.zip ./Source-R-Type-${{ steps.version.outputs.version }}.zip
+      - name: Download Source Code Packaging in the release
+        id: upload-release-asset
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          draft: true
+          files: ./Source-R-Type-${{ steps.version.outputs.version }}.zip
+
+      - run: |
+          mkdir ./R-Type
+          mv ./bin/rtype ./R-Type
+          cp -r ./assets ./R-Type
+          cp -r ./Cevy/lib ./R-Type/Cevy
+          cp -r ./build/_deps ./R-Type
+
+      - run: zip -r ./R-Type-${{ steps.version.outputs.version }}.zip ./R-Type
+
+      - name: Upload executable in .zip
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          draft: true
+          files: ./R-Type-${{ steps.version.outputs.version }}.zip
+
+      - name: Compress folder into .tar.gz
+        run: tar -czvf ./R-Type-${{ steps.version.outputs.version }}.tar.gz ./R-Type
+
+      - name: Upload executable in .tar.gz
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          draft: true
+          files: ./R-Type-${{ steps.version.outputs.version }}.tar.gz

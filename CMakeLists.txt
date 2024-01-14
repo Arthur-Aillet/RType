@@ -38,3 +38,8 @@ if(RUN)
                         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                     )
 endif()
+
+option(SOUCRE_PACKAGE "Create source packaging" OFF)
+if(SOURCE_PACKAGE)
+    include("./cpack_source.cmake")
+endif()
