@@ -33,59 +33,36 @@ void spawn_entities(Resource<Asset<cevy::engine::Mesh>> meshs, Resource<Asset<Di
   auto handle_mesh = meshs.get().load("assets/player.gltf");
   // handle_mesh.get().mesh.transform = MatrixRotateXYZ({0, M_PI, 0});
 
-  cmd.spawn(engine::Transform().rotateX(-90 * DEG2RAD), TransformVelocity(cevy::engine::Transform(0, 0, 1)), handle_mesh, PlayerMarker());
+  cmd.spawn(engine::Transform().rotateX(-90 * DEG2RAD),
+            TransformVelocity(cevy::engine::Transform(0, 0, 0)), handle_mesh, PlayerMarker());
   cmd.spawn(meshs.get().load("assets/gas.gltf"), engine::Transform(0, 2, 0)); // Gas
   cmd.spawn(meshs.get().load("assets/star.gltf"), engine::Transform(0, 4, 0),
             engine::Color(255, 250, 215)); // Broken - Used as Star
   cmd.spawn(meshs.get().load("assets/frozen.gltf"), engine::Transform(0, 12, 0));
   cmd.spawn(meshs.get().load("assets/continental.gltf"),
-            engine::Transform(0, 6, 0)); // Broken - Used as Frozen
+            engine::Transform(0, 6, 0));
   cmd.spawn(meshs.get().load("assets/smac.gltf"), engine::Transform(0, 8, 0)); // Smac
   cmd.spawn(meshs.get().load("assets/grenade.gltf"), engine::Transform(0, 16, 0));
   cmd.spawn(meshs.get().load("assets/enemy.gltf"), engine::Transform(0, 10, 0));
 }
 
-void control_spaceship(Resource<Time> time, Query<Line> lines,
-                       Query<cevy::engine::Camera, cevy::engine::Transform> cams,
-                       Query<PlayerMarker, cevy::engine::Transform, cevy::engine::TransformVelocity> spaceship) {
+void control_spaceship(
+    Resource<Time> time, Query<Line> lines,
+    Query<cevy::engine::Camera, cevy::engine::Transform> cams,
+    Query<PlayerMarker, cevy::engine::Transform, cevy::engine::TransformVelocity> spaceship) {
   for (auto [space, tm, vel] : spaceship) {
-    tm.rotateX(90 * DEG2RAD);
-    float delta = 5 * time.get().delta_seconds() * DEG2RAD;
+    float delta = 5 * time.get().delta_seconds();
 
-    if (cevy::Keyboard::keyDown(KEY_W)) {
-      vel.rotateX(delta);
-    }
-    if (cevy::Keyboard::keyDown(KEY_S)) {
-      vel.rotateX(-delta);
-    }
-    if (cevy::Keyboard::keyDown(KEY_A)) {
-      vel.rotateY(delta);
-    }
-    if (cevy::Keyboard::keyDown(KEY_D)) {
-      vel.rotateY(-delta);
-    }
-    if (cevy::Keyboard::keyDown(KEY_E)) {
-      vel.rotateZ(delta);
-    }
-    if (cevy::Keyboard::keyDown(KEY_Q)) {
-      vel.rotateZ(-delta);
-    }
-    auto [cam, cam_tranform] = cams.single();
-
-    vel.setPositionXYZ(tm.fwd() * 0.5);
-
-    // Vector fwd = cevy::engine::Vector(0, 0, 1);
-    // fwd.rotate(tm.rotation);
-    // static float speed = 0;
-    // speed += 0.0005;
-    // tm.position += fwd * (delta + speed);
-
-    cam_tranform.rotation = tm.rotation;
-    cam_tranform.position = cevy::engine::Vector(0, 3, -10);
-    cam_tranform.position.rotate(tm.rotation);
-    cam_tranform.position += tm.position;
-
-    tm.rotateX(-90 * DEG2RAD);
+    vel.position.y = 0;
+    vel.position.z = 0;
+    if (cevy::Keyboard::keyDown(KEY_W) && tm.position.y < 15.5)
+      vel.translateY(delta);
+    if (cevy::Keyboard::keyDown(KEY_S) && tm.position.y > -15.5)
+      vel.translateY(-delta);
+    if (cevy::Keyboard::keyDown(KEY_D) && tm.position.z < 28.5)
+      vel.translateZ(delta);
+    if (cevy::Keyboard::keyDown(KEY_A) && tm.position.z > -28.5)
+      vel.translateZ(-delta);
   }
 }
 
@@ -102,7 +79,8 @@ int main() {
   app.add_systems<core_stage::Startup>(spawn_entities);
   app.add_systems<core_stage::Startup>(set_background);
   app.add_systems<core_stage::Update>(control_spaceship);
-  app.spawn(cevy::engine::Camera(), cevy::engine::Transform(Vector(0, 5, -10)));
+  app.spawn(cevy::engine::Camera(),
+            cevy::engine::Transform(Vector(-40, 0, 0)).setRotationY(90 * DEG2RAD));
   app.run();
   return 0;
 }
