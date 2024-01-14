@@ -108,6 +108,14 @@ void detect_collisions(Query<Enemie_stats, engine::Transform, EntityCmp> enemies
   }
 }
 
+void delete_oob(Query<engine::Transform, EntityCmp> outside, Commands cmd) {
+  for (auto [tf, entity]: outside) {
+    if (tf.position.z > 40 || tf.position.z < -40) {
+      cmd.despawn(entity.id);
+    }
+  }
+}
+
 void spawn_enemies(Resource<Time> time, Resource<EnemySpawner> spawner, Commands cmd) {
   auto &clock = spawner.get().time_before_spawn;
 
@@ -181,6 +189,7 @@ int main() {
   app.add_systems<core_stage::Update>(spawn_enemies);
   app.add_systems<core_stage::Update>(control_spaceship);
   app.add_systems<core_stage::Update>(detect_collisions);
+  app.add_systems(delete_oob);
   app.add_systems(spawn_bullet);
   app.run();
   return 0;
