@@ -69,6 +69,7 @@ class SpaceShipSync : public cevy::Synchroniser, public cevy::ecs::Factory<Objec
   }
 
   void build_custom(cevy::ecs::App &app) override {
+    return;
     std::function<cevy::engine::Handle<cevy::engine::Diffuse>()> getDiffuse =
         [&app]() -> cevy::engine::Handle<cevy::engine::Diffuse> {
       return app.resource<cevy::engine::Asset<cevy::engine::Diffuse>>().load(
@@ -84,6 +85,8 @@ class SpaceShipSync : public cevy::Synchroniser, public cevy::ecs::Factory<Objec
         [&app]() -> cevy::engine::Handle<cevy::engine::Mesh> {
       return app.resource<EnemySpawner>().handle;
     };
+
+    // return;
 
     add_sync<PositionSync, engine::Transform, TransformVelocity>(app);
 

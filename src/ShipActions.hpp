@@ -42,6 +42,7 @@ public:
     using Fly = cevy::NetworkActions::Action<Act::fly, Presume::success, cevy::engine::Vector>;
 
     void build(cevy::ecs::App& app) override {
+        // return;
         std::cout << Shoot::value << std::endl;
         add_action<Shoot>(shootServerAction, shootAction, shootAction);
         add_action_with<Fly>(flyServerAction, flySuccessAction, flyFailureAction);
