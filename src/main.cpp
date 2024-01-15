@@ -13,6 +13,7 @@
 #include "Velocity.hpp"
 #include "input.hpp"
 #include "network/CevyNetwork.hpp"
+#include "network/network.hpp"
 #include "raylib.h"
 #include "raylib.hpp"
 #include <cstdlib>
@@ -124,7 +125,7 @@ int main(int argc, char **argv) {
     app.init_component<PlayerStats>();
     app.insert_resource(AssetManager());
     app.add_plugins(Engine());
-    app.emplace_plugin<NetworkPlugin<SpaceShipSync, ShipActions, ServerHandler>>("127.0.0.1", 12345, 54321, 0);
+    app.emplace_plugin<NetworkPlugin<SpaceShipSync, ShipActions, ServerHandler>>(12345, 54321, 0);
     // app.add_systems<core_stage::Update>(spawn_enemies);
     app.run();
   } else {
@@ -137,7 +138,8 @@ int main(int argc, char **argv) {
     // app.add_systems<core_stage::Startup>(set_background);
     // app.add_systems<core_stage::Update>(control_spaceship);
     // app.add_systems(spawn_bullet);
-    // app.emplace_plugin<NetworkPlugin<SpaceShipSync, ShipActions>>(cevy::NetworkBase::NetworkMode::Client, "127.0.0.1", 12345, 54321, 1);
+    app.emplace_plugin<NetworkPlugin<SpaceShipSync, ShipActions, ClientHandler>>(12345, 54321, 1);
+    app.resource<NetworkCommands>().connect("127.0.0.1");
     app.run();
   }
   return 0;
