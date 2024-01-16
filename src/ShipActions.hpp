@@ -11,6 +11,7 @@
 #include "Transform.hpp"
 #include "Time.hpp"
 #include "Velocity.hpp"
+#include "cevy.hpp"
 #include "main.hpp"
 #include "network/NetworkActions.hpp"
 #include "network/NetworkCommands.hpp"
@@ -18,6 +19,7 @@
 #include "network/network.hpp"
 #include "network/CevyNetwork.hpp"
 #include "input.hpp"
+#include "SpaceShipSync.hpp"
 
 using namespace cevy;
 using namespace ecs;
@@ -42,25 +44,23 @@ public:
     using Fly = cevy::NetworkActions::Action<Act::fly, Presume::success, cevy::engine::Vector>;
 
     void build(cevy::ecs::App& app) override {
+        NetworkActions::build(app);
         // return;
+        auto spawn_ship = make_function<bool, CevyNetwork::ConnectionDescriptor>(
+            [&app](CevyNetwork::ConnectionDescriptor cd){
+                app.resource<NetworkCommands>().summon<PlayerShip, Ship>(cd);
+                return true;
+            });
+        on_client_join(spawn_ship);
         std::cout << Shoot::value << std::endl;
-        add_action<Shoot>(shootServerAction, shootAction, shootAction);
-        add_action_with<Fly>(flyServerAction, flySuccessAction, flyFailureAction);
+        add_action<Shoot>(make_function(shootServerAction), make_function(shootAction), make_function(shootFailAction));
+        add_action_with<Fly>(make_function(flyServerAction), make_function(flySuccessAction), make_function(flyFailureAction));
     }
 
-    void some_system(cevy::ecs::Resource<cevy::NetworkCommands> netcmd) {
-        const bool space_bar = true;
-        if (space_bar) {
-            netcmd.get().action_with<Fly>(cevy::engine::Vector(0, 0, 1));
-        }
-        if (space_bar) {
-            netcmd.get().action<Shoot>();
-        }
-    }
 
     static EActionFailureMode flyServerAction(cevy::engine::Vector vec) {return cevy::CevyNetwork::ActionFailureMode::EActionFailureMode::Action_Success;};
     static bool flySuccessAction(cevy::engine::Vector vec) { return true;};
-    static bool flyFailureAction(cevy::engine::Vector vec) { return true;};
+    static bool flyFailureAction(EActionFailureMode, cevy::engine::Vector vec) { return true;};
 
     static EActionFailureMode shootServerAction(Resource<Asset<cevy::engine::Mesh>> meshs, Resource<BulletHandle> bullet_handle,
                   Resource<Time> time, Resource<Asset<Diffuse>> difs, Commands cmd,
@@ -80,6 +80,10 @@ public:
     // static bool shootAction(cevy::ecs::Query<> q) {};
 
     static bool shootAction() {
+        return true;
+    };
+
+    static bool shootFailAction(EActionFailureMode) {
         return true;
     };
 

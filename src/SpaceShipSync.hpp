@@ -30,12 +30,13 @@
 #include "network/CevyNetwork.hpp"
 
 enum Objects {
+  EPlayerShip = 0,
   EShip = 1,
-  EEnemy = 1,
+  EEnemy = 2,
   EBullet = 3,
 };
 
-using Ship = cevy::Synchroniser::Spawnable<Objects::EShip,
+using Ship = cevy::Synchroniser::Spawnable<Objects::EPlayerShip,
   engine::Transform,
   TransformVelocity,
   cevy::engine::Handle<cevy::engine::Diffuse>,
@@ -69,7 +70,6 @@ class SpaceShipSync : public cevy::Synchroniser, public cevy::ecs::Factory<Objec
   }
 
   void build_custom(cevy::ecs::App &app) override {
-    return;
     std::function<cevy::engine::Handle<cevy::engine::Diffuse>()> getDiffuse =
         [&app]() -> cevy::engine::Handle<cevy::engine::Diffuse> {
       return app.resource<cevy::engine::Asset<cevy::engine::Diffuse>>().load(
@@ -90,34 +90,49 @@ class SpaceShipSync : public cevy::Synchroniser, public cevy::ecs::Factory<Objec
 
     add_sync<PositionSync, engine::Transform, TransformVelocity>(app);
 
-    add_spawnable<Ship>(engine::Transform().rotateX(-90 * DEG2RAD),
-                  TransformVelocity(),
-                  make_indirect(getDiffuse),
-                  make_indirect(getMesh)),
-                  engine::Color(0, 0, 255);
-
-    add_spawnable<PlayerShip>(PlayerMarker(),
+    auto player_ship_spawner = [&app](EntityCommands e){
+      e.insert(PlayerMarker(),
                   engine::Transform().rotateX(-90 * DEG2RAD),
                   TransformVelocity(),
-                  make_indirect(getDiffuse),
-                  make_indirect(getMesh)),
-                  engine::Color(255, 0, 0);
+                  engine::Color(255, 0, 0));
+      // e.insert(
+      //   app.resource<cevy::engine::Asset<cevy::engine::Diffuse>>().load("assets/space-ship1.png")
+      //   );
+      e.insert(
+        app.resource<cevy::engine::Asset<cevy::engine::Mesh>>().load("assets/player.gltf")
+      );
 
-    add_spawnable<Enemy>(
-      make_indirect(
-        make_function<cevy::engine::Transform>(
-          [](){
-                return engine::Transform(0, rand() % 280 - 140, 34).scaleXYZ(0.004).rotateY(180 * DEG2RAD);
-              }
-        )
-      ),
-                  TransformVelocity(cevy::engine::Transform().translateZ(2. / 140.)),
-                  make_indirect(getDiffuse),
-                  make_indirect(getEnemyMesh));
+    };
 
-    // add_spawnable((uint8_t)Objects::Ship, Objects::Ship);
-    // registerBundle(Objects::Ship, cevy::Position(), cevy::Rotation(),
-    // Indirect<cevy::Handle<cevy::Model3D>>(get3dhandle));
+    auto ship_spawner = [&app](EntityCommands e){
+      e.insert(engine::Transform().rotateX(-90 * DEG2RAD),
+                  TransformVelocity(),
+                  engine::Color(255, 0, 0));
+      // e.insert(
+      //   app.resource<cevy::engine::Asset<cevy::engine::Diffuse>>().load("assets/space-ship1.png")
+      //   );
+      e.insert(
+        app.resource<cevy::engine::Asset<cevy::engine::Mesh>>().load("assets/player.gltf")
+      );
+    };
+
+  auto enemy_spawner = [&app](EntityCommands e){
+    auto spawner = app.resource<EnemySpawner>();
+    float y = rand() % 280 - 140;
+
+    e.insert(
+      spawner.handle,
+      // app.resource<cevy::engine::Asset<cevy::engine::Mesh>>().load("assets/enemy.gltf"),
+      engine::Transform(0, y / 10, 34).scaleXYZ(0.004).rotateY(180 * DEG2RAD),
+      TransformVelocity(cevy::engine::Transform().translateZ(-11 - y / 140))
+    );
+  };
+
+
+
+    add_spawnable_command<Ship>(ship_spawner);
+    add_spawnable_command<PlayerShip>(player_ship_spawner);
+    add_spawnable_command<Enemy>(enemy_spawner);
   }
 
   protected:

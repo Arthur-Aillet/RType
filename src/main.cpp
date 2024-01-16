@@ -36,10 +36,10 @@ void initial_setup(Resource<Asset<cevy::engine::Mesh>> mash_manager, Resource<As
   w.insert_resource(EnemySpawner{Timer(4, Timer::Once), 1, meshs.load("assets/enemy.gltf")});
   w.insert_resource(BulletHandle{bullet});
   // Spawn Player 0
-  cmd.spawn(engine::Transform().rotateX(-90 * DEG2RAD), TransformVelocity(), handle_mesh,
-            engine::Color(255, 0, 0),
-            PlayerStats{0, Timer(1, Timer::Once).set_elapsed(2), 13});
-  // Spawn Camera Planet
+  // cmd.spawn(engine::Transform().rotateX(-90 * DEG2RAD), TransformVelocity(), handle_mesh,
+  //           engine::Color(255, 0, 0),
+  //           PlayerStats{0, Timer(1, Timer::Once).set_elapsed(2), 13});
+  // // Spawn Camera Planet
   cmd.spawn(cevy::engine::Camera(),
             cevy::engine::Transform(Vector(-40, 0, 0)).setRotationY(90 * DEG2RAD));
   // Spawn Gas Planet
@@ -69,7 +69,7 @@ void spawn_enemies(Resource<Time> time, Resource<EnemySpawner> spawner, Commands
   clock.tick(time.get().delta());
 
   if (clock.finished()) {
-    float y = rand() % 280 - 140;
+    // float y = rand() % 280 - 140;
     // cmd.spawn(spawner.get().handle,
     //   engine::Transform(0, y / 10, 34).scaleXYZ(0.004).rotateY(180 * DEG2RAD),
     //   TransformVelocity(cevy::engine::Transform().translateZ(-11 - y / 140)));
@@ -99,6 +99,8 @@ void control_spaceship(
     Resource<Time> time,
     Query<PlayerStats, cevy::engine::Transform, cevy::engine::TransformVelocity, PlayerMarker> spaceship,
     Resource<NetworkCommands> netcmd) {
+  if (!spaceship.size())
+    return;
   auto [space, tm, vel, marker] = spaceship.single();
   Vector v{};
 
@@ -120,23 +122,27 @@ void set_background(Resource<ClearColor> col) {
 }
 
 int main(int argc, char **argv) {
-  if(argc == 1 && strcmp(argv[0], "server") == 0) {
+  if ((argc > 1) && (argv[1] == std::string("server"))) {
+    std::cout << "booting server" << std::endl;
     App app;
     app.init_component<PlayerStats>();
+    app.init_component<PlayerMarker>();
     app.insert_resource(AssetManager());
+    app.add_systems<core_stage::Startup>(initial_setup);
     app.add_plugins(Engine());
     app.emplace_plugin<NetworkPlugin<SpaceShipSync, ShipActions, ServerHandler>>(12345, 54321, 0);
-    // app.add_systems<core_stage::Update>(spawn_enemies);
+    app.add_systems<core_stage::Update>(spawn_enemies);
     app.run();
   } else {
-    struct SpaceShip {};
+    std::cout << "booting client" << std::endl;
     App app;
     app.init_component<PlayerStats>();
+    app.init_component<PlayerMarker>();
     app.insert_resource(AssetManager());
     app.add_plugins(Engine());
     app.add_systems<core_stage::Startup>(initial_setup);
     // app.add_systems<core_stage::Startup>(set_background);
-    // app.add_systems<core_stage::Update>(control_spaceship);
+    app.add_systems<core_stage::Update>(control_spaceship);
     // app.add_systems(spawn_bullet);
     app.emplace_plugin<NetworkPlugin<SpaceShipSync, ShipActions, ClientHandler>>(12345, 54321, 1);
     app.resource<NetworkCommands>().connect("127.0.0.1");
