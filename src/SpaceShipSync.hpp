@@ -65,29 +65,13 @@ class SpaceShipSync : public cevy::Synchroniser, public cevy::ecs::Factory<Objec
   SpaceShipSync(SpaceShipSync &&rhs) : Synchroniser(std::move(rhs)), Factory(rhs){};
 
   void build(cevy::ecs::App &app) override {
+    std::cout << "(INFO)ShipSync::build" << std::endl;
     Synchroniser::build(app);
     Factory<Objects>::build(app);
   }
 
   void build_custom(cevy::ecs::App &app) override {
-    std::function<cevy::engine::Handle<cevy::engine::Diffuse>()> getDiffuse =
-        [&app]() -> cevy::engine::Handle<cevy::engine::Diffuse> {
-      return app.resource<cevy::engine::Asset<cevy::engine::Diffuse>>().load(
-          "assets/space-ship1.png");
-    };
-
-    std::function<cevy::engine::Handle<cevy::engine::Mesh>()> getMesh =
-        [&app]() -> cevy::engine::Handle<cevy::engine::Mesh> {
-      return app.resource<cevy::engine::Asset<cevy::engine::Mesh>>().load("assets/space-ship1.obj");
-    };
-
-      std::function<cevy::engine::Handle<cevy::engine::Mesh>()> getEnemyMesh =
-        [&app]() -> cevy::engine::Handle<cevy::engine::Mesh> {
-      return app.resource<EnemySpawner>().handle;
-    };
-
-    // return;
-
+    std::cout << "(INFO)ShipSync::build_custom" << std::endl;
     add_sync<PositionSync, engine::Transform, TransformVelocity>(app);
 
     auto player_ship_spawner = [&app](EntityCommands e){
@@ -124,7 +108,7 @@ class SpaceShipSync : public cevy::Synchroniser, public cevy::ecs::Factory<Objec
       spawner.handle,
       // app.resource<cevy::engine::Asset<cevy::engine::Mesh>>().load("assets/enemy.gltf"),
       engine::Transform(0, y / 10, 34).scaleXYZ(0.004).rotateY(180 * DEG2RAD),
-      TransformVelocity(cevy::engine::Transform().translateZ(-11 - y / 140))
+      TransformVelocity(cevy::engine::Transform().translateZ(-11. - y / 140.))
     );
   };
 
