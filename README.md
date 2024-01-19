@@ -1,4 +1,5 @@
 # RTYPE
+![image](https://github.com/Arthur-Aillet/RType/assets/58011909/5c6375ab-eab1-4b36-b238-4dc5a58e8433)
 
 RType is our rendition of the RType subject as a part of our Epitech Curriuclum.
 
