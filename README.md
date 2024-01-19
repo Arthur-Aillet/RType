@@ -1,5 +1,7 @@
 # RTYPE
 
+![image](https://github.com/Arthur-Aillet/RType/assets/58011909/dec20adf-91da-4d67-b58c-f7eab4c55dc2)
+
 RType is our rendition of the RType subject as a part of our Epitech Curriuclum.
 
 It is (or will be) a 3D interpretation of the classical Arcade game Rtype
