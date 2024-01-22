@@ -27,7 +27,7 @@ using namespace engine;
 
 class ShipActions : public cevy::NetworkActions {
 public:
-    ShipActions(cevy::CevyNetwork &net) : NetworkActions(net) {};
+    ShipActions(cevy::CevyNetwork &net, Synchroniser& sync) : NetworkActions(net, sync) {};
 
 
     struct Act {
@@ -53,7 +53,7 @@ public:
             });
         on_client_join(spawn_ship);
         std::cout << Shoot::value << std::endl;
-        add_event<ClientJoin>();
+        // add_event<ClientJoin>();
         add_action<Shoot>(make_function(shootServerAction), make_function(shootAction), make_function(shootFailAction));
         add_action_with<Fly>(make_function(flyServerAction), make_function(flySuccessAction), make_function(flyFailureAction));
     }
