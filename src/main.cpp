@@ -27,7 +27,7 @@ using namespace cevy;
 using namespace ecs;
 using namespace engine;
 
-void initial_setup(Resource<Asset<cevy::engine::Mesh>> mash_manager, Resource<Asset<Diffuse>> difs,
+void setup_logic(Resource<Asset<cevy::engine::Mesh>> mash_manager, Resource<Asset<Diffuse>> difs,
                     Commands cmd, World &w) {
   auto &meshs = mash_manager.get();
   auto handle_mesh = meshs.load("assets/player.gltf");
@@ -35,13 +35,18 @@ void initial_setup(Resource<Asset<cevy::engine::Mesh>> mash_manager, Resource<As
 
   w.insert_resource(EnemySpawner{Timer(4, Timer::Once), 1, meshs.load("assets/enemy.gltf")});
   w.insert_resource(BulletHandle{bullet});
+  cmd.spawn(cevy::engine::Camera(),
+          cevy::engine::Transform(Vector(-40, 0, 0)).setRotationY(90 * DEG2RAD));
   // Spawn Player 0
   // cmd.spawn(engine::Transform().rotateX(-90 * DEG2RAD), TransformVelocity(), handle_mesh,
   //           engine::Color(255, 0, 0),
   //           PlayerStats{0, Timer(1, Timer::Once).set_elapsed(2), 13});
   // // Spawn Camera Planet
-  cmd.spawn(cevy::engine::Camera(),
-            cevy::engine::Transform(Vector(-40, 0, 0)).setRotationY(90 * DEG2RAD));
+}
+
+void setup_world(Resource<Asset<cevy::engine::Mesh>> mash_manager, Resource<Asset<Diffuse>> difs,
+                    Commands cmd, World &w) {
+  auto &meshs = mash_manager.get();
   // Spawn Gas Planet
   cmd.spawn(meshs.load("assets/gas.gltf"),
             TransformVelocity(cevy::engine::Transform().setRotationY(0.05 * DEG2RAD)),
@@ -114,11 +119,21 @@ void control_spaceship(
     v.z -= 1;
   v = v.normalize() * space.move_speed;
   vel.setPositionXYZ(v);
-  netcmd.get().action_with<ShipActions::Fly>(v);
+  // netcmd.get().action_with<ShipActions::Fly>(v);
 }
 
 void set_background(Resource<ClearColor> col) {
   col.get() = ClearColor(cevy::engine::Color(0, 0, 0));
+}
+
+void scramble(Query<cevy::engine::Transform, cevy::engine::TransformVelocity> q) {
+  for (auto [t, v] : q) {
+    std::vector<uint8_t> vec;
+    serialize(vec, t);
+    serialize(vec, v);
+    t = deserialize<cevy::engine::Transform>(vec);
+    v = deserialize<cevy::engine::TransformVelocity>(vec);
+  }
 }
 
 int main(int argc, char **argv) {
@@ -128,10 +143,11 @@ int main(int argc, char **argv) {
     app.init_component<PlayerStats>();
     app.init_component<PlayerMarker>();
     app.insert_resource(AssetManager());
-    app.add_systems<core_stage::Startup>(initial_setup);
+    app.add_systems<core_stage::Startup>(setup_logic);
     app.add_plugins(Engine());
-    app.emplace_plugin<NetworkPlugin<SpaceShipSync, ShipActions, ServerHandler>>(12345, 54321, 0);
+    app.emplace_plugin<NetworkPlugin<SpaceShipSync, ShipActions, ServerHandler>>(12345, 54321, 1);
     app.add_systems<core_stage::Update>(spawn_enemies);
+    app.add_systems<core_stage::Update>(scramble);
     app.run();
   } else {
     std::cout << "booting client" << std::endl;
@@ -140,7 +156,8 @@ int main(int argc, char **argv) {
     app.init_component<PlayerMarker>();
     app.insert_resource(AssetManager());
     app.add_plugins(Engine());
-    app.add_systems<core_stage::Startup>(initial_setup);
+    app.add_systems<core_stage::Startup>(setup_logic);
+    // app.add_systems<core_stage::Startup>(setup_world);
     // app.add_systems<core_stage::Startup>(set_background);
     app.add_systems<core_stage::Update>(control_spaceship);
     // app.add_systems(spawn_bullet);
