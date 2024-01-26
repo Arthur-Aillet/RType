@@ -5,6 +5,7 @@
 ** ShipActions
 */
 
+#include "ClearColor.hpp"
 #include "Diffuse.hpp"
 #include "Mesh.hpp"
 #include "Resource.hpp"
@@ -48,12 +49,13 @@ public:
         // return;
         auto spawn_ship = make_function<bool, CevyNetwork::ConnectionDescriptor>(
             [&app](CevyNetwork::ConnectionDescriptor cd){
+                app.resource<ClearColor>() = ClearColor(cevy::engine::Color(0, 0, 0));
                 app.resource<NetworkCommands>().summon<PlayerShip, Ship>(cd);
                 return true;
             });
-        on_client_join(spawn_ship);
+        // on_client_join(spawn_ship);
         std::cout << Shoot::value << std::endl;
-        // add_event<ClientJoin>();
+        add_event_with<ClientJoin>(spawn_ship);
         add_action<Shoot>(make_function(shootServerAction), make_function(shootAction), make_function(shootFailAction));
         add_action_with<Fly>(make_function(flyServerAction), make_function(flySuccessAction), make_function(flyFailureAction));
     }
@@ -72,7 +74,7 @@ public:
       if (cevy::Keyboard::keyDown(KEY_SPACE)) {
        cmd.spawn(
         bullet_handle.get().handle, TransformVelocity(cevy::engine::Transform().setPositionZ(30)),
-        engine::Transform(tm.position).translateZ(1).rotateX(90 * DEG2RAD).scaleXYZ(0.004));
+        engine::Transform(tm.position).translateZ(1).rotateX(0 * DEG2RAD).scaleXYZ(0.004));
         player_stats.time_before_shoot.reset();
       }
     }};

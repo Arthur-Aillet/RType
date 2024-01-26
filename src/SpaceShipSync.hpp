@@ -6,6 +6,7 @@
 */
 
 #pragma once
+#include <cmath>
 #include <cstdint>
 #include <string>
 #include <functional>
@@ -76,27 +77,29 @@ class SpaceShipSync : public cevy::Synchroniser, public cevy::ecs::Factory<Objec
 
     auto player_ship_spawner = [&app](EntityCommands e){
       e.insert(PlayerMarker(),
-                  engine::Transform().rotateX(-90 * DEG2RAD),
-                  TransformVelocity(),
-                  engine::Color(255, 0, 0));
+        engine::Transform().rotateX(-90 * DEG2RAD),
+        TransformVelocity(),
+        engine::Color(220, 220, 220));
+
       // e.insert(
       //   app.resource<cevy::engine::Asset<cevy::engine::Diffuse>>().load("assets/space-ship1.png")
       //   );
       e.insert(
-        app.resource<cevy::engine::Asset<cevy::engine::Mesh>>().load("assets/player.gltf")
+        app.resource<RtypeHandles>().player
       );
 
     };
 
     auto ship_spawner = [&app](EntityCommands e){
-      e.insert(engine::Transform().rotateX(-90 * DEG2RAD),
-                  TransformVelocity(),
-                  engine::Color(255, 0, 0));
+      e.insert(
+        engine::Transform().rotateX(-90 * DEG2RAD),
+        TransformVelocity(),
+        engine::Color(255, 160, 30));
       // e.insert(
       //   app.resource<cevy::engine::Asset<cevy::engine::Diffuse>>().load("assets/space-ship1.png")
       //   );
       e.insert(
-        app.resource<cevy::engine::Asset<cevy::engine::Mesh>>().load("assets/player.gltf")
+        app.resource<RtypeHandles>().player
       );
     };
 
@@ -107,7 +110,7 @@ class SpaceShipSync : public cevy::Synchroniser, public cevy::ecs::Factory<Objec
     e.insert(
       spawner.handle,
       // app.resource<cevy::engine::Asset<cevy::engine::Mesh>>().load("assets/enemy.gltf"),
-      engine::Transform(0, y / 10, 34).scaleXYZ(0.004).rotateY(180 * DEG2RAD),
+      engine::Transform(0, y / 10, 34).scaleXYZ(0.004).rotateY(M_PI),
       TransformVelocity(cevy::engine::Transform().translateZ(-11. - y / 140.))
     );
   };

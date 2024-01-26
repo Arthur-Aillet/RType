@@ -34,4 +34,10 @@ struct BulletHandle {
   cevy::engine::Handle<cevy::engine::Mesh> handle;
 };
 
+struct RtypeHandles {
+  cevy::engine::Handle<cevy::engine::Mesh> bullet;
+  cevy::engine::Handle<cevy::engine::Mesh> player;
+  cevy::engine::Handle<cevy::engine::Mesh> enemy;
+};
+
 struct PlayerMarker {};

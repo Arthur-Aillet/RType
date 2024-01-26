@@ -4,6 +4,8 @@
 #include "Color.hpp"
 #include "Commands.hpp"
 #include "EntityCommands.hpp"
+#include "Handle.hpp"
+#include "Mesh.hpp"
 #include "PhysicsProps.hpp"
 #include "Query.hpp"
 #include "Resource.hpp"
@@ -30,11 +32,12 @@ using namespace engine;
 void setup_logic(Resource<Asset<cevy::engine::Mesh>> mash_manager, Resource<Asset<Diffuse>> difs,
                     Commands cmd, World &w) {
   auto &meshs = mash_manager.get();
-  auto handle_mesh = meshs.load("assets/player.gltf");
+  auto player = meshs.load("assets/player.gltf");
   auto bullet = meshs.load("assets/grenade.gltf");
+  auto enemy = meshs.load("assets/enemy.gltf");
 
-  w.insert_resource(EnemySpawner{Timer(4, Timer::Once), 1, meshs.load("assets/enemy.gltf")});
-  w.insert_resource(BulletHandle{bullet});
+  w.insert_resource(EnemySpawner{Timer(4, Timer::Once), 1, enemy});
+  w.insert_resource(RtypeHandles{bullet, player, enemy});
   cmd.spawn(cevy::engine::Camera(),
           cevy::engine::Transform(Vector(-40, 0, 0)).setRotationY(90 * DEG2RAD));
   // Spawn Player 0
@@ -119,7 +122,7 @@ void control_spaceship(
     v.z -= 1;
   v = v.normalize() * space.move_speed;
   vel.setPositionXYZ(v);
-  // netcmd.get().action_with<ShipActions::Fly>(v);
+  netcmd.get().action_with<ShipActions::Fly>(v);
 }
 
 void set_background(Resource<ClearColor> col) {
