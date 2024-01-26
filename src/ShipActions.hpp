@@ -21,6 +21,7 @@
 #include "network/CevyNetwork.hpp"
 #include "input.hpp"
 #include "SpaceShipSync.hpp"
+#include <raylib.h>
 
 using namespace cevy;
 using namespace ecs;
@@ -61,11 +62,17 @@ public:
     }
 
 
-    static EActionFailureMode flyServerAction(cevy::engine::Vector vec) {return cevy::CevyNetwork::ActionFailureMode::EActionFailureMode::Action_Success;};
+    static EActionFailureMode flyServerAction(Actor actor, cevy::engine::Vector vec, Query<Synchroniser::SyncId, engine::Transform, PlayerMarker> q) {
+        for (auto [sync, tm, _] : q) {
+            if (sync.owner == actor)
+                tm.translateXYZ(vec);
+        }
+        return cevy::CevyNetwork::ActionFailureMode::EActionFailureMode::Action_Success;
+    };
     static bool flySuccessAction(cevy::engine::Vector vec) { return true;};
     static bool flyFailureAction(EActionFailureMode, cevy::engine::Vector vec) { return true;};
 
-    static EActionFailureMode shootServerAction(Resource<Asset<cevy::engine::Mesh>> meshs, Resource<BulletHandle> bullet_handle,
+    static EActionFailureMode shootServerAction(Actor actor, Resource<Asset<cevy::engine::Mesh>> meshs, Resource<BulletHandle> bullet_handle,
                   Resource<Time> time, Resource<Asset<Diffuse>> difs, Commands cmd,
                   Query<PlayerStats, cevy::engine::Transform> players) {
   for (auto [player_stats, tm] : players) {
