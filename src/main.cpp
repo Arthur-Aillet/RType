@@ -126,44 +126,48 @@ void set_background(Resource<ClearColor> col) {
   col.get() = ClearColor(cevy::engine::Color(0, 0, 0));
 }
 
-void scramble(Query<cevy::engine::Transform, cevy::engine::TransformVelocity> q) {
-  for (auto [t, v] : q) {
-    std::vector<uint8_t> vec;
-    serialize(vec, t);
-    serialize(vec, v);
-    t = deserialize<cevy::engine::Transform>(vec);
-    v = deserialize<cevy::engine::TransformVelocity>(vec);
-  }
+int server(int ac, char **av) {
+  std::cout << "booting server" << std::endl;
+  App app;
+  app.init_component<PlayerStats>();
+  app.init_component<PlayerMarker>();
+  app.insert_resource(AssetManager());
+  app.add_systems<core_stage::Startup>(setup_logic);
+  app.add_plugins(Engine());
+  app.emplace_plugin<NetworkPlugin<SpaceShipSync, ShipActions, ServerHandler>>(12345, 54321, 1);
+  app.add_systems<core_stage::Update>(spawn_enemies);
+  app.run();
+  return 0;
 }
 
-int main(int argc, char **argv) {
-  if ((argc > 1) && (argv[1] == std::string("server"))) {
-    std::cout << "booting server" << std::endl;
-    App app;
-    app.init_component<PlayerStats>();
-    app.init_component<PlayerMarker>();
-    app.insert_resource(AssetManager());
-    app.add_systems<core_stage::Startup>(setup_logic);
-    app.add_plugins(Engine());
-    app.emplace_plugin<NetworkPlugin<SpaceShipSync, ShipActions, ServerHandler>>(12345, 54321, 1);
-    app.add_systems<core_stage::Update>(spawn_enemies);
-    app.add_systems<core_stage::Update>(scramble);
-    app.run();
-  } else {
-    std::cout << "booting client" << std::endl;
-    App app;
-    app.init_component<PlayerStats>();
-    app.init_component<PlayerMarker>();
-    app.insert_resource(AssetManager());
-    app.add_plugins(Engine());
-    app.add_systems<core_stage::Startup>(setup_logic);
-    // app.add_systems<core_stage::Startup>(setup_world);
-    // app.add_systems<core_stage::Startup>(set_background);
-    app.add_systems<core_stage::Update>(control_spaceship);
-    // app.add_systems(spawn_bullet);
-    app.emplace_plugin<NetworkPlugin<SpaceShipSync, ShipActions, ClientHandler>>(12345, 54321, 1);
-    app.resource<NetworkCommands>().connect("127.0.0.1");
-    app.run();
-  }
+int client(int ac, char **av) {
+  std::cout << "booting client" << std::endl;
+  App app;
+  app.init_component<PlayerStats>();
+  app.init_component<PlayerMarker>();
+  app.insert_resource(AssetManager());
+  app.add_plugins(Engine());
+  app.add_systems<core_stage::Startup>(setup_logic);
+  // app.add_systems<core_stage::Startup>(setup_world);
+  // app.add_systems<core_stage::Startup>(set_background);
+  app.add_systems<core_stage::Update>(control_spaceship);
+  // app.add_systems(spawn_bullet);
+  app.emplace_plugin<NetworkPlugin<SpaceShipSync, ShipActions, ClientHandler>>(12345, 54321, 1);
+  std::string host = ac > 1 ? av[1] : "127.0.0.1";
+  app.resource<NetworkCommands>().connect(host);
+  app.run();
   return 0;
+}
+
+int main(int ac, char **av) {
+  if ((ac > 1) && (av[1] == std::string("--help") || av[1] == std::string("-h"))) {
+    std::cout << "USAGE: ./" << av[0] << "[--server | <host=localhost>]" << std::endl;
+    std::cout << "\t" << "start with --server to run as a server, or give host" << std::endl;
+    return 0;
+  }
+  if ((ac > 1) && (av[1] == std::string("--server"))) {
+    return server(ac, av);
+  } else {
+    return client(ac, av);
+  }
 }
