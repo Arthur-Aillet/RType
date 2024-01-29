@@ -37,22 +37,33 @@ enum Objects {
   EBullet = 3,
 };
 
-using Ship = cevy::Synchroniser::Spawnable<Objects::EPlayerShip,
+using Ship = cevy::Synchroniser::Spawnable<Objects::EShip,
+  // PlayerStats,
   engine::Transform,
   TransformVelocity,
   cevy::engine::Handle<cevy::engine::Diffuse>,
   cevy::engine::Handle<cevy::engine::Mesh>>;
 
-using PlayerShip = cevy::Synchroniser::Spawnable<Objects::EShip,
+using PlayerShip = cevy::Synchroniser::Spawnable<Objects::EPlayerShip,
   PlayerMarker,
+  PlayerStats,
   engine::Transform,
   TransformVelocity,
   cevy::engine::Handle<cevy::engine::Diffuse>,
   cevy::engine::Handle<cevy::engine::Mesh>>;
 
 using Enemy = cevy::Synchroniser::Spawnable<Objects::EEnemy,
+  EnemyMarker,
   engine::Transform,
   TransformVelocity,
+  cevy::engine::Handle<cevy::engine::Diffuse>,
+  cevy::engine::Handle<cevy::engine::Mesh>>;
+
+using Bullet = cevy::Synchroniser::Spawnable<Objects::EBullet,
+  engine::Transform,
+  TransformVelocity,
+  float,
+  BulletMarker,
   cevy::engine::Handle<cevy::engine::Diffuse>,
   cevy::engine::Handle<cevy::engine::Mesh>>;
 
@@ -75,10 +86,16 @@ class SpaceShipSync : public cevy::Synchroniser, public cevy::ecs::Factory<Objec
     std::cout << "(INFO)ShipSync::build_custom" << std::endl;
     add_sync<PositionSync, engine::Transform, TransformVelocity>(app);
 
+  // size_t i;
+  // cevy::engine::Timer time_before_shoot;
+  // float move_speed;
+    // Query<PlayerStats, cevy::engine::Transform, cevy::engine::TransformVelocity, PlayerMarker> spaceship,
     auto player_ship_spawner = [&app](EntityCommands e){
-      e.insert(PlayerMarker(),
+      e.insert(
+        PlayerMarker(),
         engine::Transform().rotateX(-90 * DEG2RAD),
         TransformVelocity(),
+        PlayerStats{0, Timer(1, Timer::Once).set_elapsed(2), 13},
         engine::Color(220, 220, 220));
 
       // e.insert(
@@ -94,7 +111,7 @@ class SpaceShipSync : public cevy::Synchroniser, public cevy::ecs::Factory<Objec
       e.insert(
         engine::Transform().rotateX(-90 * DEG2RAD),
         TransformVelocity(),
-        engine::Color(255, 160, 30));
+        engine::Color(rand() % 255, rand() % 255, rand() % 255));
       // e.insert(
       //   app.resource<cevy::engine::Asset<cevy::engine::Diffuse>>().load("assets/space-ship1.png")
       //   );
@@ -111,15 +128,27 @@ class SpaceShipSync : public cevy::Synchroniser, public cevy::ecs::Factory<Objec
       spawner.handle,
       // app.resource<cevy::engine::Asset<cevy::engine::Mesh>>().load("assets/enemy.gltf"),
       engine::Transform(0, y / 10, 34).scaleXYZ(0.004).rotateY(M_PI),
-      TransformVelocity(cevy::engine::Transform().translateZ(-11. - y / 140.))
+      TransformVelocity(cevy::engine::Transform().translateZ(-11. - y / 140.)),
+      EnemyMarker()
     );
   };
 
-
+  auto bullet_spawner = [&app](EntityCommands e){
+    e.insert(
+      engine::Transform().rotateX(90 * DEG2RAD).scaleXYZ(0.004),
+      TransformVelocity(cevy::engine::Transform().setPositionZ(30)),
+      0.0,
+      BulletMarker()
+      );
+    e.insert(
+      app.resource<RtypeHandles>().bullet
+    );
+  };
 
     add_spawnable_command<Ship>(ship_spawner);
     add_spawnable_command<PlayerShip>(player_ship_spawner);
     add_spawnable_command<Enemy>(enemy_spawner);
+    add_spawnable_command<Bullet>(bullet_spawner);
   }
 
   protected:

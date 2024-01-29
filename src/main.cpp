@@ -87,18 +87,44 @@ void spawn_enemies(Resource<Time> time, Resource<EnemySpawner> spawner, Commands
   }
 }
 
-void spawn_bullet(Resource<Asset<cevy::engine::Mesh>> meshs, Resource<BulletHandle> bullet_handle,
-                  Resource<Time> time, Resource<Asset<Diffuse>> difs, Commands cmd,
-                  Query<PlayerStats, cevy::engine::Transform> players) {
-  for (auto [player_stats, tm] : players) {
+void enemy_mvt(Resource<Time> time, Resource<NetworkCommands> netcmd, Query<EnemyMarker, cevy::engine::Transform, cevy::engine::TransformVelocity> enemies) {
+  for (auto [marker, tm, vel] : enemies) {
+    if (tm.position.z > 28) {
+      if (tm.position.y >= 0)
+        vel.position.y = -5;
+      if (tm.position.y < 0)
+        vel.position.y = 5;
+    }
+    if (tm.position.y > 15)
+      vel.position.y = -5;
+    if (tm.position.y < -15)
+      vel.position.y = 5;
+  }
+}
+
+void spawn_bullet(Resource<Asset<cevy::engine::Mesh>> meshs, Resource<RtypeHandles> handles,
+                  Resource<Time> time, Resource<Asset<Diffuse>> difs, Resource<NetworkCommands> netcmd,
+                  Query<PlayerStats, PlayerMarker, cevy::engine::Transform> players) {
+  for (auto [player_stats, marker, tm] : players) {
     player_stats.time_before_shoot.tick(time.get().delta());
     if (player_stats.time_before_shoot.finished()) {
       if (cevy::Keyboard::keyDown(KEY_SPACE)) {
-       cmd.spawn(
-        bullet_handle.get().handle, TransformVelocity(cevy::engine::Transform().setPositionZ(30)),
-        engine::Transform(tm.position).translateZ(1).rotateX(90 * DEG2RAD).scaleXYZ(0.004));
-        player_stats.time_before_shoot.reset();
+        netcmd.get().summon<Bullet>();
+      // cmd.spawn(
+      //   handles.get().bullet, TransformVelocity(cevy::engine::Transform().setPositionZ(30)),
+      //   engine::Transform(tm.position).translateZ(1).rotateX(90 * DEG2RAD).scaleXYZ(0.004));
+      //   player_stats.time_before_shoot.reset();
       }
+    }
+  }
+}
+
+void bullet_mvt(Resource<Time> time, Resource<NetworkCommands> netcmd, Query<BulletMarker, cevy::engine::Transform, float> bullets) {
+  for (auto [marker, tm, lifetime] : bullets) {
+    if (lifetime >= 100) {
+      lifetime += 1; //destroy
+    } else {
+      lifetime += 1;
     }
   }
 }
@@ -107,6 +133,7 @@ void control_spaceship(
     Resource<Time> time,
     Query<PlayerStats, cevy::engine::Transform, cevy::engine::TransformVelocity, PlayerMarker> spaceship,
     Resource<NetworkCommands> netcmd) {
+  // std::cout << "size of spsh" << spaceship.size() << std::endl;
   if (!spaceship.size())
     return;
   auto [space, tm, vel, marker] = spaceship.single();
@@ -134,11 +161,16 @@ int server(int ac, char **av) {
   App app;
   app.init_component<PlayerStats>();
   app.init_component<PlayerMarker>();
+  app.init_component<BulletMarker>();
+  app.init_component<EnemyMarker>();
   app.insert_resource(AssetManager());
   app.add_systems<core_stage::Startup>(setup_logic);
   app.add_plugins(Engine());
   app.emplace_plugin<NetworkPlugin<SpaceShipSync, ShipActions, ServerHandler>>(12345, 54321, 1);
+  app.add_systems<core_stage::Update>(control_spaceship);
+  app.add_systems<core_stage::Update>(spawn_bullet);
   app.add_systems<core_stage::Update>(spawn_enemies);
+  app.add_systems<core_stage::Update>(enemy_mvt);
   app.run();
   return 0;
 }
@@ -148,13 +180,16 @@ int client(int ac, char **av) {
   App app;
   app.init_component<PlayerStats>();
   app.init_component<PlayerMarker>();
+  app.init_component<BulletMarker>();
+  app.init_component<EnemyMarker>();
   app.insert_resource(AssetManager());
   app.add_plugins(Engine());
   app.add_systems<core_stage::Startup>(setup_logic);
-  // app.add_systems<core_stage::Startup>(setup_world);
-  // app.add_systems<core_stage::Startup>(set_background);
-  app.add_systems<core_stage::Update>(control_spaceship);
-  // app.add_systems(spawn_bullet);
+  app.add_systems<core_stage::Startup>(setup_world);
+  app.add_systems<core_stage::Startup>(set_background);
+  app.add_systems<core_stage::Update>(enemy_mvt);
+  // app.add_systems<core_stage::Update>(control_spaceship);
+  // app.add_systems<core_stage::Update>(spawn_bullet);
   app.emplace_plugin<NetworkPlugin<SpaceShipSync, ShipActions, ClientHandler>>(12345, 54321, 1);
   std::string host = ac > 1 ? av[1] : "127.0.0.1";
   app.resource<NetworkCommands>().connect(host);

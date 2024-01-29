@@ -41,3 +41,7 @@ struct RtypeHandles {
 };
 
 struct PlayerMarker {};
+
+struct BulletMarker {};
+
+struct EnemyMarker {};
