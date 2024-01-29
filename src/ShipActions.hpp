@@ -8,6 +8,7 @@
 #include "ClearColor.hpp"
 #include "Diffuse.hpp"
 #include "Mesh.hpp"
+#include "Query.hpp"
 #include "Resource.hpp"
 #include "Transform.hpp"
 #include "Time.hpp"
@@ -29,7 +30,7 @@ using namespace engine;
 
 class ShipActions : public cevy::NetworkActions {
 public:
-    ShipActions(cevy::CevyNetwork &net, Synchroniser& sync) : NetworkActions(net, sync) {};
+    ShipActions(cevy::CevyNetwork &net) : NetworkActions(net) {};
 
 
     struct Act {
@@ -61,18 +62,24 @@ public:
         add_action_with<Fly>(make_function(flyServerAction), make_function(flySuccessAction), make_function(flyFailureAction));
     }
 
-
-    static EActionFailureMode flyServerAction(Actor actor, cevy::engine::Vector vec, Query<Synchroniser::SyncId, engine::Transform, PlayerMarker> q) {
-        for (auto [sync, tm, _] : q) {
-            if (sync.owner == actor)
-                tm.translateXYZ(vec);
+    static EActionFailureMode flyServerAction(Actor actor, cevy::engine::Vector vec, Query<Synchroniser::SyncId, engine::Transform, PlayerStats, PlayerMarker> q, Resource<Time> time) {
+        for (auto [sync, tm, stats, _] : q) {
+            if (sync.owner == actor) {
+                if ((vec - tm.xyz()).eval() < 1.0 * stats.move_speed)
+                    tm.setPositionXYZ(vec);
+            }
         }
         return cevy::CevyNetwork::ActionFailureMode::EActionFailureMode::Action_Success;
     };
-    static bool flySuccessAction(cevy::engine::Vector vec) { return true;};
+    static bool flySuccessAction(cevy::engine::Vector vec, Query<cevy::engine::Transform, PlayerMarker> q) {
+        for (auto [tm, _] : q) {
+            tm.setPositionXYZ(vec);
+        }
+        return true;
+    };
     static bool flyFailureAction(EActionFailureMode, cevy::engine::Vector vec) { return true;};
 
-    static EActionFailureMode shootServerAction(Actor actor, Resource<Asset<cevy::engine::Mesh>> meshs, Resource<BulletHandle> bullet_handle,
+    static EActionFailureMode shootServerAction(Actor actor, Resource<Asset<cevy::engine::Mesh>> meshs, Resource<RtypeHandles> handles,
                   Resource<Time> time, Resource<Asset<Diffuse>> difs, Commands cmd,
                   Query<PlayerStats, cevy::engine::Transform> players) {
   for (auto [player_stats, tm] : players) {
@@ -80,7 +87,7 @@ public:
     if (player_stats.time_before_shoot.finished()) {
       if (cevy::Keyboard::keyDown(KEY_SPACE)) {
        cmd.spawn(
-        bullet_handle.get().handle, TransformVelocity(cevy::engine::Transform().setPositionZ(30)),
+        handles.get().bullet, TransformVelocity(cevy::engine::Transform().setPositionZ(30)),
         engine::Transform(tm.position).translateZ(1).rotateX(0 * DEG2RAD).scaleXYZ(0.004));
         player_stats.time_before_shoot.reset();
       }
