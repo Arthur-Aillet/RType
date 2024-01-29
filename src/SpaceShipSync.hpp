@@ -127,7 +127,7 @@ class SpaceShipSync : public cevy::Synchroniser, public cevy::ecs::Factory<Objec
     e.insert(
       spawner.handle,
       // app.resource<cevy::engine::Asset<cevy::engine::Mesh>>().load("assets/enemy.gltf"),
-      engine::Transform(0, y / 10, 34).scaleXYZ(0.004).rotateY(M_PI),
+      engine::Transform(0, y / 10, 34).rotateY(M_PI),
       TransformVelocity(cevy::engine::Transform().translateZ(-11. - y / 140.)),
       EnemyMarker()
     );
@@ -135,9 +135,8 @@ class SpaceShipSync : public cevy::Synchroniser, public cevy::ecs::Factory<Objec
 
   auto bullet_spawner = [&app](EntityCommands e){
     e.insert(
-      engine::Transform().rotateX(90 * DEG2RAD).scaleXYZ(0.004),
+      engine::Transform().rotateX(90 * DEG2RAD),
       TransformVelocity(cevy::engine::Transform().setPositionZ(30)),
-      0.0,
       BulletMarker()
       );
     e.insert(

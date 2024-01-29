@@ -19,6 +19,7 @@
 #include "raylib.h"
 #include "raylib.hpp"
 #include <cstdlib>
+#include <raymath.h>
 #include <string.h>
 #include "main.hpp"
 #include "SpaceShipSync.hpp"
@@ -35,6 +36,9 @@ void setup_logic(Resource<Asset<cevy::engine::Mesh>> mash_manager, Resource<Asse
   auto player = meshs.load("assets/player.gltf");
   auto bullet = meshs.load("assets/grenade.gltf");
   auto enemy = meshs.load("assets/enemy.gltf");
+
+  bullet->mesh.transform = MatrixScale(0.004, 0.004, 0.004);
+  enemy->mesh.transform = MatrixScale(0.004, 0.004, 0.004);
 
   w.insert_resource(EnemySpawner{Timer(4, Timer::Once), 1, enemy});
   w.insert_resource(RtypeHandles{bullet, player, enemy});
@@ -109,7 +113,7 @@ void spawn_bullet(Resource<Asset<cevy::engine::Mesh>> meshs, Resource<RtypeHandl
     player_stats.time_before_shoot.tick(time.get().delta());
     if (player_stats.time_before_shoot.finished()) {
       if (cevy::Keyboard::keyDown(KEY_SPACE)) {
-        netcmd.get().summon<Bullet>();
+        netcmd.get().summon<Bullet>(tm);
       // cmd.spawn(
       //   handles.get().bullet, TransformVelocity(cevy::engine::Transform().setPositionZ(30)),
       //   engine::Transform(tm.position).translateZ(1).rotateX(90 * DEG2RAD).scaleXYZ(0.004));
@@ -148,8 +152,9 @@ void control_spaceship(
   if (cevy::Keyboard::keyDown(KEY_A) && tm.position.z > -28.5)
     v.z -= 1;
   v = v.normalize() * space.move_speed;
-  vel.setPositionXYZ(v);
-  netcmd.get().action_with<ShipActions::Fly>(v);
+  v *= time.get().delta_seconds();
+  if (v.eval() != 0)
+    netcmd.get().action_with<ShipActions::Fly>(tm.xyz() + v);
 }
 
 void set_background(Resource<ClearColor> col) {
@@ -167,7 +172,7 @@ int server(int ac, char **av) {
   app.add_systems<core_stage::Startup>(setup_logic);
   app.add_plugins(Engine());
   app.emplace_plugin<NetworkPlugin<SpaceShipSync, ShipActions, ServerHandler>>(12345, 54321, 1);
-  app.add_systems<core_stage::Update>(control_spaceship);
+  // app.add_systems<core_stage::Update>(control_spaceship);
   app.add_systems<core_stage::Update>(spawn_bullet);
   app.add_systems<core_stage::Update>(spawn_enemies);
   app.add_systems<core_stage::Update>(enemy_mvt);
@@ -188,7 +193,7 @@ int client(int ac, char **av) {
   app.add_systems<core_stage::Startup>(setup_world);
   app.add_systems<core_stage::Startup>(set_background);
   app.add_systems<core_stage::Update>(enemy_mvt);
-  // app.add_systems<core_stage::Update>(control_spaceship);
+  app.add_systems<core_stage::Update>(control_spaceship);
   // app.add_systems<core_stage::Update>(spawn_bullet);
   app.emplace_plugin<NetworkPlugin<SpaceShipSync, ShipActions, ClientHandler>>(12345, 54321, 1);
   std::string host = ac > 1 ? av[1] : "127.0.0.1";
