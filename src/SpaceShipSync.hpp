@@ -62,7 +62,7 @@ using Enemy = cevy::Synchroniser::Spawnable<Objects::EEnemy,
 using Bullet = cevy::Synchroniser::Spawnable<Objects::EBullet,
   engine::Transform,
   TransformVelocity,
-  float,
+  BulletStats,
   BulletMarker,
   cevy::engine::Handle<cevy::engine::Diffuse>,
   cevy::engine::Handle<cevy::engine::Mesh>>;
@@ -137,6 +137,7 @@ class SpaceShipSync : public cevy::Synchroniser, public cevy::ecs::Factory<Objec
     e.insert(
       engine::Transform().rotateX(90 * DEG2RAD),
       TransformVelocity(cevy::engine::Transform().setPositionZ(30)),
+      BulletStats{100, 0, 10},
       BulletMarker()
       );
     e.insert(

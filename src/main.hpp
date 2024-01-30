@@ -30,6 +30,12 @@ struct PlayerStats {
   float move_speed;
 };
 
+struct BulletStats {
+  double max_lifetime;
+  double lifetime;
+  double amage;
+};
+
 struct BulletHandle {
   cevy::engine::Handle<cevy::engine::Mesh> handle;
 };

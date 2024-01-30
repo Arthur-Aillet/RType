@@ -123,12 +123,12 @@ void spawn_bullet(Resource<Asset<cevy::engine::Mesh>> meshs, Resource<RtypeHandl
   }
 }
 
-void bullet_mvt(Resource<Time> time, Resource<NetworkCommands> netcmd, Query<BulletMarker, cevy::engine::Transform, float> bullets) {
-  for (auto [marker, tm, lifetime] : bullets) {
-    if (lifetime >= 100) {
-      lifetime += 1; //destroy
+void bullet_mvt(Resource<Time> time, Resource<NetworkCommands> netcmd, Query<BulletMarker, cevy::engine::Transform, BulletStats> bullets) {
+  for (auto [marker, tm, stats] : bullets) {
+    if (stats.lifetime >= stats.max_lifetime) {
+      stats.lifetime += 1; //destroy
     } else {
-      lifetime += 1;
+      stats.lifetime += 1;
     }
   }
 }
@@ -144,9 +144,9 @@ void control_spaceship(
   Vector v{};
 
   if (cevy::Keyboard::keyDown(KEY_W) && tm.position.y < 15.5)
-    v.y += 1;
+    v.y += 5;
   if (cevy::Keyboard::keyDown(KEY_S) && tm.position.y > -15.5)
-    v.y -= 1;
+    v.y -= 5;
   if (cevy::Keyboard::keyDown(KEY_D) && tm.position.z < 28.5)
     v.z += 1;
   if (cevy::Keyboard::keyDown(KEY_A) && tm.position.z > -28.5)
@@ -166,6 +166,7 @@ int server(int ac, char **av) {
   App app;
   app.init_component<PlayerStats>();
   app.init_component<PlayerMarker>();
+  app.init_component<BulletStats>();
   app.init_component<BulletMarker>();
   app.init_component<EnemyMarker>();
   app.insert_resource(AssetManager());
@@ -173,7 +174,7 @@ int server(int ac, char **av) {
   app.add_plugins(Engine());
   app.emplace_plugin<NetworkPlugin<SpaceShipSync, ShipActions, ServerHandler>>(12345, 54321, 1);
   // app.add_systems<core_stage::Update>(control_spaceship);
-  app.add_systems<core_stage::Update>(spawn_bullet);
+  // app.add_systems<core_stage::Update>(spawn_bullet);
   app.add_systems<core_stage::Update>(spawn_enemies);
   app.add_systems<core_stage::Update>(enemy_mvt);
   app.run();
@@ -185,6 +186,7 @@ int client(int ac, char **av) {
   App app;
   app.init_component<PlayerStats>();
   app.init_component<PlayerMarker>();
+  app.init_component<BulletStats>();
   app.init_component<BulletMarker>();
   app.init_component<EnemyMarker>();
   app.insert_resource(AssetManager());
@@ -194,7 +196,7 @@ int client(int ac, char **av) {
   app.add_systems<core_stage::Startup>(set_background);
   app.add_systems<core_stage::Update>(enemy_mvt);
   app.add_systems<core_stage::Update>(control_spaceship);
-  // app.add_systems<core_stage::Update>(spawn_bullet);
+  app.add_systems<core_stage::Update>(spawn_bullet);
   app.emplace_plugin<NetworkPlugin<SpaceShipSync, ShipActions, ClientHandler>>(12345, 54321, 1);
   std::string host = ac > 1 ? av[1] : "127.0.0.1";
   app.resource<NetworkCommands>().connect(host);
