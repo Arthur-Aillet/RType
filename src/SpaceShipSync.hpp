@@ -6,11 +6,13 @@
 */
 
 #pragma once
+#include <chrono>
 #include <cmath>
 #include <cstdint>
 #include <string>
 #include <functional>
 
+#include "Time.hpp"
 #include "cevy.hpp"
 #include "main.hpp"
 #include "Asset.hpp"
@@ -95,7 +97,7 @@ class SpaceShipSync : public cevy::Synchroniser, public cevy::ecs::Factory<Objec
         PlayerMarker(),
         engine::Transform().rotateX(-90 * DEG2RAD),
         TransformVelocity(),
-        PlayerStats{0, Timer(1, Timer::Once).set_elapsed(2), 13},
+        PlayerStats{0, app.resource<Time>().now(), 20},
         engine::Color(220, 220, 220));
 
       // e.insert(

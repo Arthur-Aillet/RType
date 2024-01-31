@@ -26,7 +26,7 @@ struct EnemySpawner {
 
 struct PlayerStats {
   size_t i;
-  cevy::engine::Timer time_before_shoot;
+  cevy::ecs::Time::time_point next_shot;
   float move_speed;
 };
 

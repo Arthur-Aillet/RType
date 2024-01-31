@@ -22,6 +22,7 @@
 #include "network/CevyNetwork.hpp"
 #include "input.hpp"
 #include "SpaceShipSync.hpp"
+#include <asio/error.hpp>
 #include <raylib.h>
 
 using namespace cevy;
@@ -79,22 +80,16 @@ public:
     };
     static bool flyFailureAction(EActionFailureMode, cevy::engine::Vector vec) { return true;};
 
-    static EActionFailureMode shootServerAction(Actor actor, Resource<Asset<cevy::engine::Mesh>> meshs, Resource<RtypeHandles> handles,
-                  Resource<Time> time, Resource<Asset<Diffuse>> difs, Commands cmd,
-                  Query<PlayerStats, cevy::engine::Transform> players) {
-  for (auto [player_stats, tm] : players) {
-    player_stats.time_before_shoot.tick(time.get().delta());
-    if (player_stats.time_before_shoot.finished()) {
-      if (cevy::Keyboard::keyDown(KEY_SPACE)) {
-       cmd.spawn(
-        handles.get().bullet, TransformVelocity(cevy::engine::Transform().setPositionZ(30)),
-        engine::Transform(tm.position).translateZ(1).rotateX(0 * DEG2RAD).scaleXYZ(0.004));
-        player_stats.time_before_shoot.reset();
-      }
-    }};
+    static EActionFailureMode shootServerAction(Actor actor,
+        Query<Synchroniser::SyncId, cevy::engine::Transform, PlayerMarker> players,
+        Resource<NetworkCommands> netcmd) {
+        for (auto [id, tm, _] : players) {
+            if (id.owner == actor) {
+                netcmd.get().summon<Bullet>(tm);
+            }
+        }
         return cevy::CevyNetwork::ActionFailureMode::Action_Success;
     }
-    // static bool shootAction(cevy::ecs::Query<> q) {};
 
     static bool shootAction() {
         return true;
