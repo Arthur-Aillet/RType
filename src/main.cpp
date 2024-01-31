@@ -77,9 +77,11 @@ void setup_world(Resource<Asset<cevy::engine::Mesh>> mash_manager, Resource<Asse
             PhysicsProps().setDecay(0), engine::Transform(50, -30, -30).scaleXYZ(12));
 }
 
-void spawn_enemies(Resource<Time> time, Resource<EnemySpawner> spawner, Commands cmd, Resource<NetworkCommands> netcmd) {
+void spawn_enemies(Resource<Time> time, Resource<EnemySpawner> spawner, Commands cmd, Resource<NetworkCommands> netcmd, Query<PlayerMarker> players)  {
   auto &clock = spawner.get().time_before_spawn;
 
+  if (players.size() < 2)
+    return;
   clock.tick(time.get().delta());
 
   if (clock.finished()) {
@@ -93,10 +95,10 @@ void spawn_enemies(Resource<Time> time, Resource<EnemySpawner> spawner, Commands
   }
 }
 
-void enemy_mvt(Resource<Time> time, Resource<NetworkCommands> netcmd, Query<EnemyMarker, cevy::engine::Transform, cevy::engine::TransformVelocity> enemies) {
-  for (auto [marker, tm, vel] : enemies) {
+void enemy_mvt(Resource<Time> time, Resource<NetworkCommands> netcmd, Query<EnemyMarker, cevy::engine::Transform, cevy::engine::TransformVelocity, SyncId> enemies) {
+  for (auto [marker, tm, vel, id] : enemies) {
     if (tm.position.z < -29) {
-      //destroy enemy;
+      netcmd.get().dismiss(id);
     }
     if (tm.position.z > 28) {
       if (tm.position.y >= 0)
@@ -112,29 +114,31 @@ void enemy_mvt(Resource<Time> time, Resource<NetworkCommands> netcmd, Query<Enem
 }
 
 void collisions(Resource<NetworkCommands> netcmd,
-  Query<EnemyMarker, cevy::engine::Transform, cevy::engine::TransformVelocity> enemies,
-  Query<BulletMarker, cevy::engine::Transform, BulletStats> bullets,
-  Query<PlayerStats, cevy::engine::Transform, cevy::engine::TransformVelocity> spaceship) {
-    for (auto [emarker, etm, evel] : enemies) {
-      for (auto [btmarker, bttm, btstats] : bullets) {
+  Query<EnemyMarker, cevy::engine::Transform, cevy::engine::TransformVelocity, SyncId> enemies,
+  Query<BulletMarker, cevy::engine::Transform, BulletStats, SyncId> bullets,
+  Query<PlayerStats, cevy::engine::Transform, cevy::engine::TransformVelocity, SyncId> spaceship) {
+    for (auto [emarker, etm, evel, eid] : enemies) {
+      for (auto [btmarker, bttm, btstats, bid] : bullets) {
         if (abs(bttm.position.x - etm.position.x) + abs(bttm.position.y - etm.position.y) + abs(bttm.position.z - etm.position.z) < 1) {
           std::cout << "enemy hit" << std::endl;
-          //destroy enemy;
+          netcmd.get().dismiss(eid);
+          netcmd.get().dismiss(bid);
         }
       }
-      for (auto [pstats, ptm, pvel] : spaceship) {
+      for (auto [pstats, ptm, pvel, id] : spaceship) {
         if (abs(ptm.position.x - etm.position.x) + abs(ptm.position.y - etm.position.y) + abs(ptm.position.z - etm.position.z) < 1) {
-          // pstats.life -= 1;
-          //destroy enemy;
+          // pstats. -= 1;
+          netcmd.get().dismiss(id);
+          netcmd.get().dismiss(eid);
         }
       }
   }
 }
 
-void bullet_mvt(Resource<Time> time, Resource<NetworkCommands> netcmd, Query<BulletMarker, cevy::engine::Transform, BulletStats> bullets) {
-  for (auto [marker, tm, stats] : bullets) {
+void bullet_mvt(Resource<Time> time, Resource<NetworkCommands> netcmd, Query<BulletMarker, cevy::engine::Transform, BulletStats, SyncId> bullets) {
+  for (auto [marker, tm, stats, id] : bullets) {
     if (stats.lifetime >= stats.max_lifetime) {
-      //destroy bullet
+      netcmd.get().dismiss(id);
     } else {
       stats.lifetime += 1;
     }
@@ -192,6 +196,7 @@ int server(int ac, char **av) {
   app.add_systems<core_stage::Update>(spawn_enemies);
   app.add_systems<core_stage::Update>(enemy_mvt);
   app.run();
+  app.add_systems<core_stage::Update>(bullet_mvt);
   return 0;
 }
 
@@ -209,7 +214,6 @@ int client(int ac, char **av) {
   app.add_systems<core_stage::Startup>(setup_world);
   app.add_systems<core_stage::Startup>(set_background);
   app.add_systems<core_stage::Update>(enemy_mvt);
-  app.add_systems<core_stage::Update>(bullet_mvt);
   app.add_systems<core_stage::Update>(control_spaceship);
   app.emplace_plugin<NetworkPlugin<SpaceShipSync, ShipActions, ClientHandler>>(12345, 54321, 1);
   std::string host = ac > 1 ? av[1] : "127.0.0.1";

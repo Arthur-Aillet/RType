@@ -13,10 +13,13 @@
 #include "ecs.hpp"
 #include "Asset.hpp"
 #include "AssetManager.hpp"
+#include "network/Synchroniser.hpp"
 
 using namespace cevy;
 using namespace ecs;
 using namespace engine;
+
+using SyncId = Synchroniser::SyncId;
 
 struct EnemySpawner {
   cevy::engine::Timer time_before_spawn;

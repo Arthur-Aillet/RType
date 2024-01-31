@@ -56,9 +56,20 @@ public:
                 app.resource<NetworkCommands>().summon<PlayerShip, Ship>(cd);
                 return true;
             });
+
+        auto clear_user = make_function<bool, CevyNetwork::ConnectionDescriptor, Query<Synchroniser::SyncId>>(
+            [&app](CevyNetwork::ConnectionDescriptor cd, Query<Synchroniser::SyncId> q){
+                for (auto [id] : q) {
+                    if (id.owner == cd) {
+                        app.resource<NetworkCommands>().dismiss(id);
+                    }
+                }
+                return true;
+            });
         // on_client_join(spawn_ship);
         std::cout << Shoot::value << std::endl;
         add_event_with<ClientJoin>(spawn_ship);
+        add_event_with<ClientLeave>(clear_user);
         add_action<Shoot>(make_function(shootServerAction), make_function(shootAction), make_function(shootFailAction));
         add_action_with<Fly>(make_function(flyServerAction), make_function(flySuccessAction), make_function(flyFailureAction));
     }
