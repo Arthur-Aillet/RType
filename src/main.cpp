@@ -182,10 +182,12 @@ void control_spaceship(
   }
 }
 
-void lifebar(Resource<LifeResource> resource, Query<PlayerStats, cevy::engine::Transform, cevy::engine::TransformVelocity, PlayerMarker> player, Query<LifeMarker, cevy::engine::TransformVelocity> bar, Commands cmd) {
+void lifebar(Resource<LifeResource> resource, Query<PlayerStats> player, Query<LifeMarker, cevy::engine::TransformVelocity> bar, Commands cmd) {
   static int life = 0;
 
-  auto [stats, tm, vel, marker] = player.single();
+  if (!player.size())
+    return;
+  auto [stats] = player.single();
   if (stats.life > life)
     for (int i = stats.life; i != life; i--)
       for (auto [_, transform] : bar);
@@ -194,10 +196,12 @@ void lifebar(Resource<LifeResource> resource, Query<PlayerStats, cevy::engine::T
     for (int i = stats.life; i != life; i++)
       cmd.spawn(resource.get().handle,
         LifeMarker(),
-        engine::Transform(0, 5, 5 + 10 * (stats.life + i)).scaleXYZ(0.002)
+        engine::Transform(0, 15, 15 + 5 * (stats.life + i)).scaleXYZ(0.004)
       );
-  if (stats.life != life)
+  if (stats.life != life) {
+    std::cout << "life: " << stats.life << std::endl;
     life = stats.life;
+  }
 }
 
 void set_background(Resource<ClearColor> col) {
