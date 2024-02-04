@@ -27,6 +27,10 @@ struct EnemySpawner {
   Handle<cevy::engine::Mesh> handle;
 };
 
+struct LifeResource {
+    Handle<cevy::engine::Mesh> handle;
+};
+
 struct PlayerStats {
   size_t i;
   cevy::ecs::Time::time_point next_shot;
@@ -48,9 +52,12 @@ struct RtypeHandles {
   cevy::engine::Handle<cevy::engine::Mesh> bullet;
   cevy::engine::Handle<cevy::engine::Mesh> player;
   cevy::engine::Handle<cevy::engine::Mesh> enemy;
+  cevy::engine::Handle<cevy::engine::Mesh> life;
 };
 
 struct PlayerMarker {};
+
+struct LifeMarker {};
 
 struct BulletMarker {};
 

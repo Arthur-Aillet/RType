@@ -43,7 +43,8 @@ void setup_logic(Resource<Asset<cevy::engine::Mesh>> mash_manager, Resource<Asse
   enemy->mesh.transform = MatrixScale(0.004, 0.004, 0.004);
 
   w.insert_resource(EnemySpawner{Timer(4, Timer::Once), 1, enemy});
-  w.insert_resource(RtypeHandles{bullet, player, enemy});
+  w.insert_resource(LifeResource{enemy});
+  w.insert_resource(RtypeHandles{bullet, player, enemy, enemy});
   cmd.spawn(cevy::engine::Camera(),
           cevy::engine::Transform(Vector(-40, 0, 0)).setRotationY(90 * DEG2RAD));
   // Spawn Player 0
@@ -181,6 +182,24 @@ void control_spaceship(
   }
 }
 
+void lifebar(Resource<LifeResource> resource, Query<PlayerStats> player, Query<LifeMarker, cevy::engine::TransformVelocity> bar, Commands cmd) {
+  static int life = 0;
+
+  auto [stats] = player.single();
+  if (stats.life > life)
+    for (int i = stats.life; i != life; i--)
+      for (auto [_, transform] : bar);
+        //delete one
+  if (stats.life < life)
+    for (int i = stats.life; i != life; i++)
+      cmd.spawn(resource.get().handle,
+        LifeMarker(),
+        engine::Transform(0, 5, 5 + 10 * (stats.life + i)).scaleXYZ(0.002)
+      );
+  if (stats.life != life)
+    life = stats.life;
+}
+
 void set_background(Resource<ClearColor> col) {
   col.get() = ClearColor(cevy::engine::Color(0, 0, 0));
 }
@@ -214,6 +233,7 @@ int client(int ac, char **av) {
   app.init_component<BulletStats>();
   app.init_component<BulletMarker>();
   app.init_component<EnemyMarker>();
+  app.init_component<LifeMarker>();
   app.insert_resource(AssetManager());
   app.add_plugins(Engine());
   app.add_systems<core_stage::Startup>(setup_logic);
@@ -221,6 +241,7 @@ int client(int ac, char **av) {
   app.add_systems<core_stage::Startup>(set_background);
   app.add_systems<core_stage::Update>(enemy_mvt);
   app.add_systems<core_stage::Update>(control_spaceship);
+  app.add_systems<core_stage::Update>(lifebar);
   app.emplace_plugin<NetworkPlugin<SpaceShipSync, ShipActions, ClientHandler>>(12345, 54321, 1);
   std::string host = ac > 1 ? av[1] : "127.0.0.1";
   app.resource<NetworkCommands>().connect(host);
