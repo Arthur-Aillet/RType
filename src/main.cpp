@@ -80,7 +80,7 @@ void setup_world(Resource<Asset<cevy::engine::Mesh>> mash_manager, Resource<Asse
 void spawn_enemies(Resource<Time> time, Resource<EnemySpawner> spawner, Commands cmd, Resource<NetworkCommands> netcmd, Query<PlayerMarker> players)  {
   auto &clock = spawner.get().time_before_spawn;
 
-  if (players.size() < 2)
+  if (players.size() < 1)
     return;
   clock.tick(time.get().delta());
 
@@ -117,6 +117,7 @@ void collisions(Resource<NetworkCommands> netcmd,
   Query<EnemyMarker, cevy::engine::Transform, cevy::engine::TransformVelocity, SyncId> enemies,
   Query<BulletMarker, cevy::engine::Transform, BulletStats, SyncId> bullets,
   Query<PlayerStats, cevy::engine::Transform, cevy::engine::TransformVelocity, SyncId> spaceship) {
+
     for (auto [emarker, etm, evel, eid] : enemies) {
       for (auto [btmarker, bttm, btstats, bid] : bullets) {
         if (abs(bttm.position.x - etm.position.x) + abs(bttm.position.y - etm.position.y) + abs(bttm.position.z - etm.position.z) < 1) {
@@ -127,8 +128,11 @@ void collisions(Resource<NetworkCommands> netcmd,
       }
       for (auto [pstats, ptm, pvel, id] : spaceship) {
         if (abs(ptm.position.x - etm.position.x) + abs(ptm.position.y - etm.position.y) + abs(ptm.position.z - etm.position.z) < 1) {
-          // pstats. -= 1;
-          netcmd.get().dismiss(id);
+          pstats.life -= 1;
+          netcmd.get().action_with<ShipActions::SetLife>(pstats.life);
+          if (pstats.life <= 0) {
+            netcmd.get().dismiss(id);
+          }
           netcmd.get().dismiss(eid);
         }
       }
@@ -155,9 +159,9 @@ void control_spaceship(
   Vector v{};
 
   if (cevy::Keyboard::keyDown(KEY_W) && tm.position.y < 15.5)
-    v.y += 5;
+    v.y += 1;
   if (cevy::Keyboard::keyDown(KEY_S) && tm.position.y > -15.5)
-    v.y -= 5;
+    v.y -= 1;
   if (cevy::Keyboard::keyDown(KEY_D) && tm.position.z < 28.5)
     v.z += 1;
   if (cevy::Keyboard::keyDown(KEY_A) && tm.position.z > -28.5)
@@ -166,6 +170,8 @@ void control_spaceship(
   v *= time.get().delta_seconds();
   if (v.eval() != 0)
     netcmd.get().action_with<ShipActions::Fly>(tm.xyz() + v);
+
+    std::cout << "life:" << player_stats.life << std::endl;
 
   if (cevy::Keyboard::keyDown(KEY_SPACE)) {
     if (player_stats.next_shot <= time.get().now()) {

@@ -39,6 +39,7 @@ public:
         shoot,
         fly,
         flyDown,
+        setLife
     };
     };
 
@@ -46,6 +47,7 @@ public:
 
     using Shoot = cevy::NetworkActions::Action<Act::shoot, Presume::idk>;
     using Fly = cevy::NetworkActions::Action<Act::fly, Presume::success, cevy::engine::Vector>;
+    using SetLife = cevy::NetworkActions::Action<Act::setLife, Presume::success, int>;
 
     void build(cevy::ecs::App& app) override {
         NetworkActions::build(app);
@@ -72,6 +74,7 @@ public:
         add_event_with<ClientLeave>(clear_user);
         add_action<Shoot>(make_function(shootServerAction), make_function(shootAction), make_function(shootFailAction));
         add_action_with<Fly>(make_function(flyServerAction), make_function(flySuccessAction), make_function(flyFailureAction));
+        add_action_with<SetLife>(make_function(setLifeServerAction), make_function(setLifeSuccessAction), make_function(setLifeFailureAction));
     }
 
     static EActionFailureMode flyServerAction(Actor actor, cevy::engine::Vector vec, Query<Synchroniser::SyncId, engine::Transform, PlayerStats, PlayerMarker> q, Resource<Time> time) {
@@ -109,6 +112,24 @@ public:
     static bool shootFailAction(EActionFailureMode) {
         return true;
     };
+
+    static EActionFailureMode setLifeServerAction(Actor actor, int newLife, Query<Synchroniser::SyncId, engine::Transform, PlayerStats, PlayerMarker> q, Resource<Time> time) {
+        for (auto [sync, tm, stats, _] : q) {
+            if (sync.owner == actor) {
+                stats.life = newLife;
+            }
+        }
+        return cevy::CevyNetwork::ActionFailureMode::EActionFailureMode::Action_Success;
+    };
+
+    static bool setLifeSuccessAction(int newLife, Query<cevy::engine::Transform, PlayerStats, PlayerMarker> q) {
+        for (auto [tm, stats, _] : q) {
+            stats.life = newLife;
+        }
+        return true;
+    };
+
+    static bool setLifeFailureAction(EActionFailureMode, int newLife) { return true;};
 
 private:
 };

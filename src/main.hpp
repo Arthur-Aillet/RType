@@ -31,6 +31,7 @@ struct PlayerStats {
   size_t i;
   cevy::ecs::Time::time_point next_shot;
   float move_speed;
+  int life;
 };
 
 struct BulletStats {
