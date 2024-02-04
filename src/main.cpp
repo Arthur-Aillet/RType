@@ -182,10 +182,10 @@ void control_spaceship(
   }
 }
 
-void lifebar(Resource<LifeResource> resource, Query<PlayerStats> player, Query<LifeMarker, cevy::engine::TransformVelocity> bar, Commands cmd) {
+void lifebar(Resource<LifeResource> resource, Query<PlayerStats, cevy::engine::Transform, cevy::engine::TransformVelocity, PlayerMarker> player, Query<LifeMarker, cevy::engine::TransformVelocity> bar, Commands cmd) {
   static int life = 0;
 
-  auto [stats] = player.single();
+  auto [stats, tm, vel, marker] = player.single();
   if (stats.life > life)
     for (int i = stats.life; i != life; i--)
       for (auto [_, transform] : bar);
