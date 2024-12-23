@@ -6,6 +6,7 @@ project(Cevy LANGUAGES CXX VERSION 0.1)
 set(Cevy_VERSION 0.1)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib")
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 if (WIN32)
     set(CMAKE_CXX_STANDARD_LIBRARIES "-static-libgcc -static-libstdc++ -lwsock32 -lws2_32 ${CMAKE_CXX_STANDARD_LIBRARIES}")
@@ -34,7 +35,7 @@ option(RUN "Launch game" OFF)
 if(RUN)
     add_custom_target(run
                         COMMENT "Launching binary"
-                        COMMAND rtype
+                        COMMAND bunny
                         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                     )
 endif()
