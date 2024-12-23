@@ -1,26 +1,25 @@
-#include "App.hpp"
+#include "ecs/App.hpp"
 #include "Asset.hpp"
 #include "AssetManager.hpp"
-#include "Camera.hpp"
+#include "engine/Camera.hpp"
 #include "ClearColor.hpp"
 #include "Color.hpp"
-#include "Commands.hpp"
-#include "Entity.hpp"
-#include "EntityCommands.hpp"
-#include "PhysicsProps.hpp"
-#include "Query.hpp"
+#include "ecs/commands/Commands.hpp"
+#include "ecs/Entity.hpp"
+#include "commands/EntityCommands.hpp"
+#include "engine/PhysicsProps.hpp"
+#include "ecs/Query.hpp"
 #include "Resource.hpp"
 #include "Stage.hpp"
 #include "Time.hpp"
-#include "Timer.hpp"
-#include "Transform.hpp"
-#include "Vector.hpp"
-#include "Velocity.hpp"
+#include "engine/Timer.hpp"
+#include "engine/Transform.hpp"
+// #include "Vector.hpp"
+#include "engine/Velocity.hpp"
 #include "ecs.hpp"
 #include "engine/Engine.hpp"
-#include "input.hpp"
-#include "raylib.h"
-#include "raylib.hpp"
+#include "engine/input.hpp"
+// #include "raylib.h"
 #include <cstdlib>
 
 using namespace cevy;
@@ -68,7 +67,7 @@ void initial_setup(Resource<Asset<cevy::engine::Mesh>> mash_manager, Resource<As
             PlayerStats{0, Timer(1, Timer::Once).set_elapsed(0.5), 13});
   // Spawn Camera Planet
   cmd.spawn(cevy::engine::Camera(),
-            cevy::engine::Transform(Vector(-40, 0, 0)).setRotationY(90 * DEG2RAD));
+            cevy::engine::Transform(glm::vec3(-40, 0, 0)).setRotationY(90 * DEG2RAD));
   // Spawn Gas Planet
   cmd.spawn(meshs.load("assets/gas.gltf"),
             TransformVelocity(cevy::engine::Transform().setRotationY(0.05 * DEG2RAD)),
@@ -157,7 +156,7 @@ void control_spaceship(
     Resource<Time> time,
     Query<PlayerStats, cevy::engine::Transform, cevy::engine::TransformVelocity> spaceship) {
   for (auto [space, tm, vel] : spaceship) {
-    Vector v{};
+    glm::vec3 v{};
 
     if (cevy::Keyboard::keyDown(KEY_W) && tm.position.y < 15.5)
       v.y += 1;
@@ -167,7 +166,7 @@ void control_spaceship(
       v.z += 1;
     if (cevy::Keyboard::keyDown(KEY_A) && tm.position.z > -28.5)
       v.z -= 1;
-    vel.setPositionXYZ(v.normalize() * space.move_speed);
+    vel.setPositionXYZ(glm::normalize(v) * space.move_speed);
   }
 }
 
