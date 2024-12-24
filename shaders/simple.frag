@@ -19,7 +19,22 @@ struct Light {
 	float radius;
 };
 
-uniform Light lights[5];
+const int lightCount = 15;
+
+// uniform Lights {
+// 	vec4 position;
+// 	vec3 color;
+// 	float radius;
+// } lights[lightCount];
+
+// uniform Light lights[lightCount];
+
+layout (std140, binding = 1) uniform LightBlock {
+	Light lights[lightCount];
+};
+
+
+uniform int activeLights;
 
 uniform vec3 albedo;
 uniform vec3 specular_tint;
@@ -81,13 +96,13 @@ void main()
 
 	vec3 specular = ambientColor;
 
-	for (int i = 0; i < 5; ++i) {
-		shade_light(diffuse_light, specular, smooth_normal, dnv, lights[i].color, lights[i].position, lights[i].radius, viewVec);
+	for (int i = 0; i < lightCount; ++i) {
+		shade_light(diffuse_light, specular, smooth_normal, dnv, float(i < activeLights) * lights[i].color, lights[i].position, 0, viewVec);
 	}
 
 	vec3 surface = fresnel * diffuse_light * albedo * color + (1 - fresnel) * specular * specular_tint;
 
-	// surface = mix(surface, fog, clamp(pow(v_position.z / fog_far, 0.5), 0, 1));
+	surface = mix(surface, fog, clamp(pow(v_position.z / fog_far, 0.5), 0, 1));
 	surface = filmicToneMapping(surface);
 
 	fragColor = vec4(surface, 1.0);

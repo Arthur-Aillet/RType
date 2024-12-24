@@ -6,17 +6,9 @@ layout(location = 2) in vec3 vertexNormal;
 layout(location = 3) in vec2 vertexTexCoord;
 
 uniform mat4 view;
-uniform mat4 custom1;
 uniform mat4 model;
 uniform mat3 model_normal;
 
-uniform vec3 lightPosition;
-uniform vec3 lightColor;
-uniform vec3 ambientColor;
-
-uniform vec3 albedo;
-uniform vec3 specular_tint;
-uniform float phong_exponent;
 uniform bool has_texture;
 
 out vec3 color;
