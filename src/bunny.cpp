@@ -1,7 +1,7 @@
 #define GLM_FORCE_SWIZZLE
 #define GLM_ENABLE_EXPERIMENTAL
-#include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/string_cast.hpp>
+#include <glm/gtc/quaternion.hpp>
 #include <glm/fwd.hpp>
 #include "Velocity.hpp"
 #include "Asset.hpp"
@@ -16,6 +16,8 @@
 #include "App.hpp"
 #include "Stage.hpp"
 #include "pipeline.hpp"
+#include "glWindow.hpp"
+#include "DeferredRenderer.hpp"
 #include "Bunny.hpp"
 #include "Query.hpp"
 
@@ -37,7 +39,7 @@ int initial_setup(Resource<Asset<cevy::engine::Model>> mesh_manager, Resource<As
   auto &mats = material_manager.get();
   auto bunny_handle = meshs.load(Bunny::model());
   auto mat_h = mats.load(PbrMaterial(glm::vec3(0.1, .1, .1), glm::vec3(1), 12));
-
+  mat_h.get()->ambiant = {0.07, 0.005, 0};
   // auto bunny = cmd.spawn(Transform(), bunny_handle, mat_h, Color(0, 0, 1));
   cmd.spawn(cevy::engine::Camera(),
             cevy::engine::Transform(glm::vec3(0, -2, -10)));
@@ -64,7 +66,8 @@ int initial_setup(Resource<Asset<cevy::engine::Model>> mesh_manager, Resource<As
 int main() {
   App app;
   app.init_resource<AssetManager>();
-  app.add_plugins(Engine());
+  app.add_plugins(Engine<glWindow, cevy::engine::DeferredRenderer>());
+  // app.add_plugins(Engine<glWindow, cevy::engine::ForwardRenderer>());
   app.add_systems<cevy::ecs::core_stage::PostStartup>(initial_setup);
   app.run();
 }
