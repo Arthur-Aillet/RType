@@ -23,6 +23,10 @@ run:
 	cmake -DRUN=on -DDEBUG_MODE=on -S . -B ./build
 	make --no-print-directory -C build run
 
+run_debug:
+	cmake -DRUN=on -DDEBUG_MODE=on -S . -B ./build
+	make --no-print-directory -C build run_debug
+
 run_release:
 	cmake -DRUN=on -DDEBUG_MODE=off -S . -B ./build
 	make --no-print-directory -C build run

@@ -36,7 +36,16 @@ if(RUN)
     add_custom_target(run
                         COMMENT "Launching binary"
                         COMMAND bunny
-                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                        # WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                        WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+                    )
+    add_custom_target(run_debug
+                        COMMENT "Launching binary with valgrind"
+                        DEPENDS bunny
+                        # COMMAND pwd
+                        COMMAND valgrind ./bunny
+                        # WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                        WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
                     )
 endif()
 
