@@ -77,11 +77,45 @@ int initial_setup(Resource<Asset<cevy::engine::Model>> mesh_manager,
   return 0;
 }
 
+void move_camera(Resource<cevy::input::ButtonInput<cevy::input::KeyCode>> keyboard,
+  Query<cevy::engine::Camera, cevy::engine::Transform> cam_q,
+  Resource<cevy::ecs::Time> time) {
+  glm::vec3 direction = {0, 0, 0};
+  float speed = 10;
+
+  for (auto [_, transform] : cam_q) {
+    if (keyboard.get().is_pressed(cevy::input::KeyCode::A)) {
+      direction.x -= 1;
+    }
+    if (keyboard.get().is_pressed(cevy::input::KeyCode::D)) {
+      direction.x += 1;
+    }
+    if (keyboard.get().is_pressed(cevy::input::KeyCode::Space)) {
+      direction.y -= 1;
+    }
+    if (keyboard.get().is_pressed(cevy::input::KeyCode::Shift)) {
+      direction.y += 1;
+    }
+    if (keyboard.get().is_pressed(cevy::input::KeyCode::W)) {
+      direction.z += 1;
+    }
+    if (keyboard.get().is_pressed(cevy::input::KeyCode::S)) {
+      direction.z -= 1;
+    }
+    float delta_time = time.get().delta().count();
+
+    if (glm::length(direction) != 0) {
+      transform.translateXYZ(glm::normalize(direction) * transform.rotation * speed * delta_time);
+    }
+  }
+}
+
 int main() {
   App app;
   app.init_resource<AssetManager>();
   app.add_plugins(Engine<glWindow, cevy::engine::DeferredRenderer>());
-  // app.add_plugins(Engine<glWindow, cevy::engine::ForwardRenderer>());
+  //app.add_plugins(Engine<glWindow, cevy::engine::ForwardRenderer>());
   app.add_systems<cevy::ecs::core_stage::PostStartup>(initial_setup);
+  app.add_systems<cevy::ecs::core_stage::Update>(move_camera);
   app.run();
 }
