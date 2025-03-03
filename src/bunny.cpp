@@ -5,9 +5,14 @@
 #include <glm/gtc/constants.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/string_cast.hpp>
+#include <glm/detail/type_quat.hpp>
 
+#include "Query.hpp"
+#include "Resource.hpp"
 #include "App.hpp"
 #include "Asset.hpp"
+#include "Event.hpp"
+#include "input/state.hpp"
 #include "AssetManager.hpp"
 #include "Bunny.hpp"
 #include "Color.hpp"
@@ -59,7 +64,7 @@ int initial_setup(Resource<Asset<cevy::engine::Model>> mesh_manager,
   auto plane = cmd.spawn(plane_handle, mat_white, Color(0.8, 0.8, 1),
                          Transform(glm::vec3(0, 0, 0), glm::quat({0, 0, 0}), glm::vec3(1, 1, 1)));
 
-  const int ringCount = 9;
+  const int ringCount = 16;
   const float ringRadius = 5;
   for (int i = 0; i < ringCount; i++) {
     glm::vec3 rgb = 10.f * hsv2rgb({float(i) / ringCount, 0.9, 1.0f});
@@ -90,25 +95,50 @@ void move_camera(Resource<cevy::input::ButtonInput<cevy::input::KeyCode>> keyboa
     if (keyboard.get().is_pressed(cevy::input::KeyCode::D)) {
       direction.x += 1;
     }
-    if (keyboard.get().is_pressed(cevy::input::KeyCode::Space)) {
+    if (keyboard.get().is_pressed(cevy::input::KeyCode::Shift)) {
       direction.y -= 1;
     }
-    if (keyboard.get().is_pressed(cevy::input::KeyCode::Shift)) {
+    if (keyboard.get().is_pressed(cevy::input::KeyCode::Space)) {
       direction.y += 1;
     }
     if (keyboard.get().is_pressed(cevy::input::KeyCode::W)) {
-      direction.z += 1;
+      direction.z -= 1;
     }
     if (keyboard.get().is_pressed(cevy::input::KeyCode::S)) {
-      direction.z -= 1;
+      direction.z += 1;
     }
     float delta_time = time.get().delta().count();
 
     if (glm::length(direction) != 0) {
-      transform.translateXYZ(glm::normalize(direction) * transform.rotation * speed * delta_time);
+      transform.translateXYZ(transform.rotation * glm::normalize(direction) * speed * delta_time);
     }
   }
 }
+
+void rotate_camera(Query<cevy::engine::Camera, cevy::engine::Transform> cam_q, cevy::ecs::EventReader<cevy::input::mouseMotion> mouseMotionReader) {
+  static glm::vec2 rotation = {0 * glm::pi<float>(), glm::pi<float>() * 0.3f};
+
+  for (auto [_, transform] : cam_q) {
+    for (const auto &mouseMotion: mouseMotionReader) {
+      if (mouseMotion.delta.has_value()) {
+      // std::cout << "read as " << glm::to_string(mouseMotion.delta.value())  << std::endl;
+
+        rotation.x -= mouseMotion.delta.value().x * 0.005;
+        rotation.y -= mouseMotion.delta.value().y * 0.005;
+        rotation.y = glm::clamp(rotation.y, 0.f, glm::pi<float>());
+
+      }
+    }
+    const glm::quat xQuat = glm::quat({ 0., 0., rotation.x });
+    const glm::quat yQuat = glm::quat({ rotation.y, 0., 0. });
+
+    transform.rotation = xQuat * yQuat;
+  }
+}
+
+// void display(Resource<cevy::input::cursorInWindow> in, cevy::ecs::EventReader<cevy::input::cursorEntered> enter) {
+//  std::cout << in->inside << std::endl;
+// }
 
 int main() {
   App app;
@@ -116,6 +146,8 @@ int main() {
   app.add_plugins(Engine<glWindow, cevy::engine::DeferredRenderer>());
   //app.add_plugins(Engine<glWindow, cevy::engine::ForwardRenderer>());
   app.add_systems<cevy::ecs::core_stage::PostStartup>(initial_setup);
+  app.add_systems<cevy::ecs::core_stage::Update>(rotate_camera);
   app.add_systems<cevy::ecs::core_stage::Update>(move_camera);
+  //app.add_systems<cevy::ecs::core_stage::Update>(display);
   app.run();
 }
