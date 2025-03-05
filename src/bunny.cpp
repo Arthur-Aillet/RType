@@ -14,7 +14,7 @@
 #include "Event.hpp"
 #include "input/state.hpp"
 #include "AssetManager.hpp"
-#include "Bunny.hpp"
+#include "BunnyMesh.hpp"
 #include "Color.hpp"
 #include "DeferredRenderer.hpp"
 #include "Engine.hpp"

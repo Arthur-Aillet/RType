@@ -1,4 +1,4 @@
-#include "Bunny.hpp"
+#include "BunnyMesh.hpp"
 #include "bunny_mesh.h"
 
 Model Bunny::model() {

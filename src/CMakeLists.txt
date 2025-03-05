@@ -6,7 +6,7 @@
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g3 -ggdb")
 
-add_executable(bunny bunny.cpp Bunny.cpp)
+add_executable(bunny bunny.cpp BunnyMesh.cpp)
 
 target_link_libraries(bunny PUBLIC cevy)
 
