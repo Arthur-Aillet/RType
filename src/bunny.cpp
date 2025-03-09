@@ -1,3 +1,5 @@
+#include "Scheduler.hpp"
+#include "cursor.hpp"
 #define GLM_FORCE_SWIZZLE
 #define GLM_ENABLE_EXPERIMENTAL
 
@@ -17,13 +19,16 @@
 #include "Bunny.hpp"
 #include "Color.hpp"
 #include "DeferredRenderer.hpp"
-#include "Engine.hpp"
 #include "Model.hpp"
 #include "PbrMaterial.hpp"
 #include "Transform.hpp"
 #include "Velocity.hpp"
-#include "commands/EntityCommands.hpp"
-#include "glWindow.hpp"
+#include "Editor.hpp"
+#include "Stage.hpp"
+#include "Window.hpp"
+#include "EnginePlugin.hpp"
+#include "EntityCommands.hpp"
+
 using namespace cevy;
 using namespace ecs;
 using namespace engine;
@@ -57,14 +62,14 @@ int initial_setup(Resource<Asset<cevy::engine::Model>> mesh_manager,
   auto rotator =
       cmd.spawn(bunny_handle, h_mat_bunny, Color(0, 0, 1),
                 Transform(glm::vec3(0, 0, 0), glm::quat({0, 0, 0}), glm::vec3(1, 1, 1)),
-                TransformVelocity(Transform(glm::vec3(0.5, 0, 0), glm::quat({0, 0, DEG2RAD * 90}),
+                TransformVelocity(Transform(glm::vec3(0, 0, 0), glm::quat({0, 0, DEG2RAD * 90}),
                                             glm::vec3(1, 1, 1))));
   std::cout << "added rotator...:" << rotator.id() << std::endl;
 
   auto plane = cmd.spawn(plane_handle, mat_white, Color(0.8, 0.8, 1),
                          Transform(glm::vec3(0, 0, 0), glm::quat({0, 0, 0}), glm::vec3(1, 1, 1)));
 
-  const int ringCount = 16;
+  const int ringCount = 5;
   const float ringRadius = 5;
   for (int i = 0; i < ringCount; i++) {
     glm::vec3 rgb = 10.f * hsv2rgb({float(i) / ringCount, 0.9, 1.0f});
@@ -136,18 +141,39 @@ void rotate_camera(Query<cevy::engine::Camera, cevy::engine::Transform> cam_q, c
   }
 }
 
+void window_fullscreen(Resource<cevy::input::ButtonInput<cevy::input::KeyCode>> keyboard, Resource<Window> window) {
+  if (keyboard->is_just_released(cevy::input::KeyCode::F11)) {
+
+    if (!window->isFullscreen()) {
+      window->setFullscreen(true);
+      window->setCursorState(cevy::engine::CursorState::disabled);
+    } else {
+      window->setFullscreen(false);
+      window->setCursorState(cevy::engine::CursorState::normal);
+    }
+  }
+}
+
+void shutdown(Resource<cevy::input::ButtonInput<cevy::input::KeyCode>> keyboard, EventWriter<AppExit> close) {
+  if (keyboard->is_just_released(cevy::input::KeyCode::Escape)) {
+    close.send(AppExit {});
+  }
+}
+
 // void display(Resource<cevy::input::cursorInWindow> in, cevy::ecs::EventReader<cevy::input::cursorEntered> enter) {
-//  std::cout << in->inside << std::endl;
+//   std::cout << in->inside << std::endl;
 // }
 
 int main() {
   App app;
   app.init_resource<AssetManager>();
-  app.add_plugins(Engine<glWindow, cevy::engine::DeferredRenderer>());
+  app.add_plugins(Engine<glWindow::Builder<cevy::engine::DeferredRenderer/*, cevy::editor::Editor/*, editor::Compositor */>>());
   //app.add_plugins(Engine<glWindow, cevy::engine::ForwardRenderer>());
   app.add_systems<cevy::ecs::core_stage::PostStartup>(initial_setup);
   app.add_systems<cevy::ecs::core_stage::Update>(rotate_camera);
   app.add_systems<cevy::ecs::core_stage::Update>(move_camera);
+  app.add_systems<cevy::ecs::core_stage::Update>(window_fullscreen);
+  app.add_systems<cevy::ecs::core_stage::Update>(shutdown);
   //app.add_systems<cevy::ecs::core_stage::Update>(display);
   app.run();
 }
