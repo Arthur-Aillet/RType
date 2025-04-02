@@ -1,23 +1,23 @@
-#include "ecs/App.hpp"
 #include "Asset.hpp"
 #include "AssetManager.hpp"
-#include "engine/Camera.hpp"
 #include "ClearColor.hpp"
 #include "Color.hpp"
-#include "ecs/commands/Commands.hpp"
-#include "ecs/Entity.hpp"
-#include "commands/EntityCommands.hpp"
-#include "engine/PhysicsProps.hpp"
-#include "ecs/Query.hpp"
 #include "Resource.hpp"
 #include "Stage.hpp"
 #include "Time.hpp"
+#include "commands/EntityCommands.hpp"
+#include "ecs/App.hpp"
+#include "ecs/Entity.hpp"
+#include "ecs/Query.hpp"
+#include "ecs/commands/Commands.hpp"
+#include "engine/Camera.hpp"
+#include "engine/PhysicsProps.hpp"
 #include "engine/Timer.hpp"
 #include "engine/Transform.hpp"
 // #include "Vector.hpp"
-#include "engine/Velocity.hpp"
 #include "ecs.hpp"
 #include "engine/Engine.hpp"
+#include "engine/Velocity.hpp"
 #include "engine/input.hpp"
 // #include "raylib.h"
 #include <cstdlib>
@@ -42,7 +42,7 @@ struct EntityCmp {
   Entity id;
 };
 
-struct Bullet { };
+struct Bullet {};
 
 struct PlayerStats {
   size_t i;
@@ -60,11 +60,11 @@ void initial_setup(Resource<Asset<cevy::engine::Mesh>> mash_manager, Resource<As
   auto handle_mesh = meshs.load("assets/player.gltf");
   auto bullet = meshs.load("assets/grenade.gltf");
 
-  w.insert_resource(EnemySpawner{Timer(4, Timer::Once), 1, meshs.load("assets/enemy.gltf")});
-  w.insert_resource(BulletHandle{bullet});
+  w.insert_resource(EnemySpawner {Timer(4, Timer::Once), 1, meshs.load("assets/enemy.gltf")});
+  w.insert_resource(BulletHandle {bullet});
   // Spawn Player 0
   cmd.spawn(engine::Transform().rotateX(-90 * DEG2RAD), TransformVelocity(), handle_mesh,
-            PlayerStats{0, Timer(1, Timer::Once).set_elapsed(0.5), 13});
+            PlayerStats {0, Timer(1, Timer::Once).set_elapsed(0.5), 13});
   // Spawn Camera Planet
   cmd.spawn(cevy::engine::Camera(),
             cevy::engine::Transform(glm::vec3(-40, 0, 0)).setRotationY(90 * DEG2RAD));
@@ -90,8 +90,7 @@ void initial_setup(Resource<Asset<cevy::engine::Mesh>> mash_manager, Resource<As
 }
 
 void detect_collisions(Query<Enemie_stats, engine::Transform, EntityCmp> enemies,
-                       Query<Bullet, engine::Transform, EntityCmp> bullets,
-                       Commands cmd) {
+                       Query<Bullet, engine::Transform, EntityCmp> bullets, Commands cmd) {
   for (auto [box, e_tf, e_en] : enemies) {
     for (auto [b, b_tf, b_en] : bullets) {
       if (b_tf.position.x < e_tf.position.x + (box.x / 2) &&
@@ -100,15 +99,15 @@ void detect_collisions(Query<Enemie_stats, engine::Transform, EntityCmp> enemies
           b_tf.position.y > e_tf.position.y - (box.y / 2) &&
           b_tf.position.z < e_tf.position.z + (box.z / 2) &&
           b_tf.position.z > e_tf.position.z - (box.z / 2)) {
-          cmd.despawn(e_en.id);
-          cmd.despawn(b_en.id);
+        cmd.despawn(e_en.id);
+        cmd.despawn(b_en.id);
       }
     }
   }
 }
 
 void delete_oob(Query<engine::Transform, EntityCmp> outside, Commands cmd) {
-  for (auto [tf, entity]: outside) {
+  for (auto [tf, entity] : outside) {
     if (tf.position.z > 40 || tf.position.z < -40) {
       cmd.despawn(entity.id);
     }
@@ -124,10 +123,9 @@ void spawn_enemies(Resource<Time> time, Resource<EnemySpawner> spawner, Commands
     float y = rand() % 280 - 140;
     Enemie_stats e {100, 5, 10};
     auto a = cmd.spawn(spawner.get().handle,
-              engine::Transform(0, y / 10, 34).scaleXYZ(0.004).rotateY(180 * DEG2RAD),
-              TransformVelocity(cevy::engine::Transform().translateZ(-11 - y / 140)), e
-              );
-    a.insert(EntityCmp{a.id()});
+                       engine::Transform(0, y / 10, 34).scaleXYZ(0.004).rotateY(180 * DEG2RAD),
+                       TransformVelocity(cevy::engine::Transform().translateZ(-11 - y / 140)), e);
+    a.insert(EntityCmp {a.id()});
     clock.setDuration(clock.duration().count() -
                       clock.duration().count() * (spawner.get().spawn_increase_perc / 100));
     clock.reset();
@@ -142,10 +140,10 @@ void spawn_bullet(Resource<Asset<cevy::engine::Mesh>> meshs, Resource<BulletHand
     if (player_stats.time_before_shoot.finished()) {
       if (cevy::Keyboard::keyDown(KEY_SPACE)) {
         auto a = cmd.spawn(
-            Bullet{}, bullet_handle.get().handle,
+            Bullet {}, bullet_handle.get().handle,
             TransformVelocity(cevy::engine::Transform().setPositionZ(30)),
             engine::Transform(tm.position).translateZ(1).rotateX(90 * DEG2RAD).scaleXYZ(0.004));
-        a.insert(EntityCmp{a.id()});
+        a.insert(EntityCmp {a.id()});
         player_stats.time_before_shoot.reset();
       }
     }
@@ -156,7 +154,7 @@ void control_spaceship(
     Resource<Time> time,
     Query<PlayerStats, cevy::engine::Transform, cevy::engine::TransformVelocity> spaceship) {
   for (auto [space, tm, vel] : spaceship) {
-    glm::vec3 v{};
+    glm::vec3 v {};
 
     if (cevy::Keyboard::keyDown(KEY_W) && tm.position.y < 15.5)
       v.y += 1;

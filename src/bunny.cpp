@@ -1,5 +1,3 @@
-#include "Scheduler.hpp"
-#include "cursor.hpp"
 #define GLM_FORCE_SWIZZLE
 #define GLM_ENABLE_EXPERIMENTAL
 
@@ -9,25 +7,28 @@
 #include <glm/gtx/string_cast.hpp>
 #include <glm/detail/type_quat.hpp>
 
-#include "Query.hpp"
-#include "Resource.hpp"
 #include "App.hpp"
 #include "Asset.hpp"
-#include "Event.hpp"
-#include "input/state.hpp"
 #include "AssetManager.hpp"
 #include "Bunny.hpp"
 #include "Color.hpp"
 #include "DeferredRenderer.hpp"
-#include "Model.hpp"
-#include "PbrMaterial.hpp"
-#include "Transform.hpp"
-#include "Velocity.hpp"
 #include "Editor.hpp"
-#include "Stage.hpp"
-#include "Window.hpp"
 #include "EnginePlugin.hpp"
 #include "EntityCommands.hpp"
+#include "Event.hpp"
+#include "Model.hpp"
+#include "PbrMaterial.hpp"
+#include "Query.hpp"
+#include "Resource.hpp"
+#include "Scheduler.hpp"
+#include "Stage.hpp"
+#include "Transform.hpp"
+#include "Velocity.hpp"
+#include "Window.hpp"
+
+#include "cursor.hpp"
+#include "input/state.hpp"
 
 using namespace cevy;
 using namespace ecs;
@@ -80,7 +81,7 @@ int initial_setup(Resource<Asset<cevy::engine::Model>> mesh_manager,
                   ringRadius * std::sin(glm::two_pi<float>() * float(i) / ringCount), 3.0f),
         glm::quat({0, 0, 0}), glm::vec3(.5, .5, .5));
     PointLight light = {rgb, 1.0f};
-    auto entity = cmd.spawn(Parent{rotator.id()}, tm, light, bunny_handle, h_mat_light,
+    auto entity = cmd.spawn(Parent {rotator.id()}, tm, light, bunny_handle, h_mat_light,
                             TransformVelocity(glm::quat({0, 2, -1})));
   }
 
@@ -88,8 +89,8 @@ int initial_setup(Resource<Asset<cevy::engine::Model>> mesh_manager,
 }
 
 void move_camera(Resource<cevy::input::ButtonInput<cevy::input::KeyCode>> keyboard,
-  Query<cevy::engine::Camera, cevy::engine::Transform> cam_q,
-  Resource<cevy::ecs::Time> time) {
+                 Query<cevy::engine::Camera, cevy::engine::Transform> cam_q,
+                 Resource<cevy::ecs::Time> time) {
   glm::vec3 direction = {0, 0, 0};
   float speed = 10;
 
@@ -120,31 +121,32 @@ void move_camera(Resource<cevy::input::ButtonInput<cevy::input::KeyCode>> keyboa
   }
 }
 
-void rotate_camera(Query<cevy::engine::Camera, cevy::engine::Transform> cam_q, cevy::ecs::EventReader<cevy::input::mouseMotion> mouseMotionReader) {
+void rotate_camera(Query<cevy::engine::Camera, cevy::engine::Transform> cam_q,
+                   cevy::ecs::EventReader<cevy::input::mouseMotion> mouseMotionReader) {
   static glm::vec2 rotation = {0 * glm::pi<float>(), glm::pi<float>() * 0.3f};
 
   for (auto [_, transform] : cam_q) {
-    for (const auto &mouseMotion: mouseMotionReader) {
+    for (const auto &mouseMotion : mouseMotionReader) {
       if (mouseMotion.delta.has_value()) {
-      // std::cout << "read as " << glm::to_string(mouseMotion.delta.value())  << std::endl;
+        // std::cout << "read as " << glm::to_string(mouseMotion.delta.value())  << std::endl;
 
         rotation.x -= mouseMotion.delta.value().x * 0.005;
         rotation.y -= mouseMotion.delta.value().y * 0.005;
         rotation.y = glm::clamp(rotation.y, 0.f, glm::pi<float>());
-
       }
     }
-    const glm::quat xQuat = glm::quat({ 0., 0., rotation.x });
-    const glm::quat yQuat = glm::quat({ rotation.y, 0., 0. });
+    const glm::quat xQuat = glm::quat({0., 0., rotation.x});
+    const glm::quat yQuat = glm::quat({rotation.y, 0., 0.});
 
     transform.rotation = xQuat * yQuat;
   }
 }
 
-void window_fullscreen(Resource<cevy::input::ButtonInput<cevy::input::KeyCode>> keyboard, Resource<Window> window) {
+void window_fullscreen(Resource<cevy::input::ButtonInput<cevy::input::KeyCode>> keyboard,
+                       Resource<Window> window) {
   if (keyboard->is_just_released(cevy::input::KeyCode::F11)) {
 
-    if (!window->isFullscreen()) {
+    if (!window->fullscreen()) {
       window->setFullscreen(true);
       window->setCursorState(cevy::engine::CursorState::disabled);
     } else {
@@ -154,26 +156,29 @@ void window_fullscreen(Resource<cevy::input::ButtonInput<cevy::input::KeyCode>> 
   }
 }
 
-void shutdown(Resource<cevy::input::ButtonInput<cevy::input::KeyCode>> keyboard, EventWriter<AppExit> close) {
+void shutdown(Resource<cevy::input::ButtonInput<cevy::input::KeyCode>> keyboard,
+              EventWriter<AppExit> close) {
   if (keyboard->is_just_released(cevy::input::KeyCode::Escape)) {
     close.send(AppExit {});
   }
 }
 
-// void display(Resource<cevy::input::cursorInWindow> in, cevy::ecs::EventReader<cevy::input::cursorEntered> enter) {
+// void display(Resource<cevy::input::cursorInWindow> in,
+// cevy::ecs::EventReader<cevy::input::cursorEntered> enter) {
 //   std::cout << in->inside << std::endl;
 // }
 
 int main() {
   App app;
   app.init_resource<AssetManager>();
-  app.add_plugins(Engine<glWindow::Builder<cevy::engine::DeferredRenderer/*, cevy::editor::Editor/*, editor::Compositor */>>());
-  //app.add_plugins(Engine<glWindow, cevy::engine::ForwardRenderer>());
+  app.add_plugins(Engine<glWindow::Builder<cevy::engine::DeferredRenderer,
+                                           cevy::editor::Editor /*, editor::Compositor */>>());
+  // app.add_plugins(Engine<glWindow, cevy::engine::ForwardRenderer>());
   app.add_systems<cevy::ecs::core_stage::PostStartup>(initial_setup);
   app.add_systems<cevy::ecs::core_stage::Update>(rotate_camera);
   app.add_systems<cevy::ecs::core_stage::Update>(move_camera);
   app.add_systems<cevy::ecs::core_stage::Update>(window_fullscreen);
   app.add_systems<cevy::ecs::core_stage::Update>(shutdown);
-  //app.add_systems<cevy::ecs::core_stage::Update>(display);
+  // app.add_systems<cevy::ecs::core_stage::Update>(display);
   app.run();
 }

@@ -4,13 +4,13 @@
 using Model = cevy::engine::Model;
 
 class Bunny {
-public:
-    Model static model();
+  public:
+  Model static model();
 
-protected:
-    Bunny() = default;
-    ~Bunny() = default;
+  protected:
+  Bunny() = default;
+  ~Bunny() = default;
 
-protected:
-private:
+  protected:
+  private:
 };
